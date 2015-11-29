@@ -1,0 +1,11 @@
+class Tests
+	operations
+
+	public runAllTests : () ==> ()
+	runAllTests () == (
+		BoardTest`runAllTests();
+		ChampionshipTest`runAllTests();
+
+	);
+
+end Tests

@@ -1,0 +1,44 @@
+class Utilities
+	types
+		public String = seq of char;
+
+	functions
+
+		-- Return the minimum of two values
+		static public min : nat * nat -> nat
+			min(a, b) ==
+				if a <= b then a
+				else b;
+
+
+		static public seqToString[@T] : seq of [@T] * (@T -> String) -> String
+		seqToString (sequence, printer) ==
+			if sequence = [] then "[]"
+			else "[" ^ auxSeqToString[@T](sequence, printer) ^ "]";
+
+
+		static private auxSeqToString[@T] : seq1 of [@T] * (@T -> String) -> String
+		auxSeqToString (sequence, printer) ==
+			if len sequence = 1 then
+				printer(hd sequence)
+			else
+				printer(hd sequence) ^ ", " ^ auxSeqToString[@T](tl sequence, printer);
+
+
+		static private setToSeq[@T] : set of [@T] -> seq of [@T]
+		setToSeq (s) ==
+			if card s = 1 then
+				let x in set s in [x]
+			else
+				let x in set s in
+					[x] ^ setToSeq[@T](s\{x})
+		pre s <> {}
+		post forall element in set s & element in set elems RESULT;
+
+
+		static public setToString[@T] : set of @T * (@T -> String) -> String
+		setToString(s, printer) ==
+			if s = {} then "{}"
+			else "{" ^ auxSeqToString[@T](setToSeq[@T](s), printer) ^ "}";
+
+end Utilities

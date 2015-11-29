@@ -1,0 +1,369 @@
+
+Tendo enumerado agora as restrições que o sistema deve cumprir para
+funcionar corretamente, iremos agora explicar como estas foram
+implementadas no modelo de VDM.
+
+A primeira restrição, que indica que a após a solução de um tabuleiro
+ter sido encontrada não é possível fazer mais nenhuma jogada nele foi
+implementada através da pré-condição implementada no operador
+``makeAPlay'' da classe Board.
+
+\begin{vdm_al}
+  public makeAPlay : seq1 of Color`Color ==> ()
+  makeAPlay (attempt) == ...
+  pre len attempt = attemptLength and
+      not isGameOver()
+  post attempts = attempts~ ^ [attempt];
+\end{vdm_al}
+
+Como se pode ver pela pós-condição do operador ``isGameOver'' se a
+solução já tiver sido encontrada, então este operador irá
+garantidamente devolver ``true'' o que fazer com que a pré-condição do
+operador ``makeAPlay'' seja falsa.
+
+\begin{vdm_al}
+  public isGameOver : () ==> bool
+    isGameOver () == ...
+  post RESULT = (isSolutionCracked() or len attempts = maxAttempts);
+\end{vdm_al}
+
+O operador ``isSolutionCracked'' verifica simplesmente se a solução
+está na sequência de tentativas realizadas.
+
+\begin{vdm_al}
+  -- Return true if the correct code has been found
+  public isSolutionCracked : () ==> bool
+    isSolutionCracked () == return solution in set elems attempts
+  post solution in set elems attempts => RESULT = true;
+\end{vdm_al}
+
+Como foi mostrado anteriormente, a definição de ``isGameOver'' devolve
+o valor ``true'' quando o tamanho da sequência de tentativas for igual
+ao número máximo de tentativas definidas para aquele tabuleiro (valor
+dado pela variável ``maxAttempts''). Assim, a restrição 2 ``Só é
+possível efetuar uma tentativa se o jogo ainda não tiver terminado'' é
+também implementada com o uso a uma pré-condição no operador
+``makeAPlay''.
+
+Para implementar a restrição 3, que indica que uma cor usada num
+tabuleiro tem que pertencer a um conjunto de cores previamente
+definido foi criada uma invariante sobre o tipo Color definido na
+class Color, que indica que cada variável do tipo Color têm que ser
+uma das seguintes cores: ``b''lue, ``g''reen, ``r''ed, ``o''range,
+``y''ellow, ``m''agenta.
+
+\begin{vdm_al}
+  types
+    public Color = char
+    inv color == color in set {'b', 'g', 'r', 'o', 'y', 'm'};
+\end{vdm_al}
+
+Para implementar a restrição 4, que limita o tamanho das soluções e
+tentativas feitas num tabuleiro a sequências de 4 cores foram escritas
+um conjunto de pré-condições em diversos operadores das classes
+``Board'', ``Championship'' e ``Game''.
+
+Primeiro, para facilitar a compreensão do código, foi criada a
+seguinte constante na classe ``Board'':
+
+\begin{vdm_al}
+  values
+  public attemptLength : nat1 = 4;
+\end{vdm_al}
+
+E foi também definida esta invariante sobre a variável ``attempts''
+que impede que ela contenha sequências com um tamanho diferente do
+valor que está em ``attemptLength'':
+
+\begin{vdm_al}
+  inv forall attempt in set elems attempts & len attempt = attemptLength and
+    len attempts <= maxAttempts;
+\end{vdm_al}
+
+O mesmo foi feito para a variável ``solution'' que contêm o código a
+quebrar do tabuleiro:
+
+\begin{vdm_al}
+  inv len solution = attemptLength;
+\end{vdm_al}
+
+Apesar de estas invariantes serem suficientes para cumprir com a
+restrição indicada, a fim de se conseguir detetar este tipo de erros o
+mais cedo possível, foram também criadas as seguintes pré-condições
+nos construtores da classe ``Board'':
+
+\begin{vdm_al}
+  public Board : seq1 of Color`Color ==> Board
+  Board (correctPlay) == ...
+  pre len correctPlay = attemptLength
+  post solution = correctPlay and
+    attempts = [];
+\end{vdm_al}
+
+\begin{vdm_al}
+  public Board : seq1 of Color`Color * nat1 ==> Board
+  Board (correctPlay, maxNumberOfTries) == ...
+  pre len correctPlay = attemptLength and
+    maxNumberOfTries in set maxAttemptsAvailable
+  post solution = correctPlay and
+    maxAttempts in set maxAttemptsAvailable;
+\end{vdm_al}
+
+No caso do construtor ``Board()'' como este não recebe nenhuma solução
+do utilizador esta é gerada aleatoriamente pelo computador então a
+restrição foi colocada na pós-condição em vez de se meter na
+pré-condição:
+
+\begin{vdm_al}
+  public Board : () ==> Board
+  Board() == ...
+  post len solution = attemptLength and attempts = [];
+\end{vdm_al}
+
+Esta restrição foi também colocada como pré-condição do operador
+``makeAPlay'' da classe ``Board'', devido ao fato de a tentativa que
+vai ser inserida no tabuleiro também precisar de ter um comprimento
+igual a ``attemptLength''.
+
+\begin{vdm_al}
+  public makeAPlay : seq1 of Color`Color ==> ()
+    makeAPlay (attempt) == ...
+  pre len attempt = attemptLength and
+    not isGameOver()
+  post attempts = attempts~ ^ [attempt];
+\end{vdm_al}
+
+Foi também implementada esta restrição no operador ``addGame'' da
+classe ``Championship'' de forma a impedir que o sistema crie jogos
+cujas soluções tenham um comprimento diferente a ``attemptLength''.
+
+\begin{vdm_al}
+  public addGame : map String to (seq of Color`Color) ==> Game
+  addGame(teamsSolutions) == ...
+  pre dom teamsSolutions subset teams and
+    dom teamsSolutions not in set oldMatchups() and
+    forall solution in set rng teamsSolutions & len solution = Board`attemptLength
+  post RESULT in set games;
+\end{vdm_al}
+
+E por fim, esta restrição foi implementada como uma pré-condição no construtor
+``Game(teamsSolutions, championship)'' pois este construtor é
+responsável por criar objetos da classe ``Board'' e assim impedimos o
+sistema de tentar criar jogos que tivessem solução que quebrassem esta
+restrição.
+
+\begin{vdm_al}
+  public Game : map String to seq1 of Color`Color * Championship ==> Game
+  Game (teamsSolutions, championship) == ...
+  pre card (dom teamsSolutions) = 2 and
+    forall team in set dom teamsSolutions &
+      team in set championship.getTeams() and
+    forall solution in set rng teamsSolutions &
+      len solution = Board`attemptLength
+
+  post forall team in set (dom gameInstances) &
+    let opponentTeam = dom teamsSolutions \ {team} in
+      {gameInstances(team).getSolution()} =
+      rng (opponentTeam <: teamsSolutions);
+\end{vdm_al}
+
+
+Para implementar a restrição 5, que indica que o número máximo de
+tentativas que o \emph{codebreaker} pode efetuar têm que ser igual a 8, 10 ou
+12, foi criado um conjunto na classe ``Board'' que guarda esses
+valores.
+
+\begin{vdm_al}
+  public maxAttemptsAvailable : set of nat1 = {8, 10, 12};
+\end{vdm_al}
+
+Para guardar de fato o valor do número máximo de tentativas de cada
+instância da classe ``Board'' foi criada uma variável ``maxAttempts''
+que guarda esse valor. Esta variável tem por defeito o valor 12.
+
+\begin{vdm_al}
+  private maxAttempts : nat1 := 12;
+\end{vdm_al}
+
+Foi também definida uma invariante sobre essa variável que indica que
+o valor dela têm que pertencer aos valores máximos permitidos pelas
+regras do jogo.
+
+\begin{vdm_al}
+  inv maxAttempts in set maxAttemptsAvailable;
+\end{vdm_al}
+
+Tal como já foi anteriormente mostrado, a variável ``attempts'' também
+contêm uma invariante que impede que o comprimento dela seja maior que
+o valor de ``maxAttempts''.
+
+\begin{vdm_al}
+  inv forall attempt in set elems attempts & len attempt = attemptLength and
+    len attempts <= maxAttempts;
+\end{vdm_al}
+
+Mais uma vez, apesar de estas duas invariantes serem suficientes para
+garantir a restrição do tamanho do tabuleiro ser 8, 10 ou 12, foi
+também adicionado código às pré-condições do construtor
+``Board(correctPlay, maxNumberOfTries)'' e do operador ``makeAPlay''.
+
+Esta restrição foi então colocada na pré-condição do construtor
+``Board(correctPlay, maxNumberOfTries)'', forçando assim que o valor
+de ``maxNumberOfTries'' sofra a mesma restrição de domínio que a da
+variável ``maxAttempts''.
+
+\begin{vdm_al}
+  public Board : seq1 of Color`Color * nat1 ==> Board
+  Board (correctPlay, maxNumberOfTries) == ...
+  pre len correctPlay = attemptLength and
+    maxNumberOfTries in set maxAttemptsAvailable
+  post solution = correctPlay and
+    maxAttempts in set maxAttemptsAvailable;
+\end{vdm_al}
+
+Por fim, esta restrição encontra-se também ativa no operador
+``makeAPlay'' devido ao fato de este invocar a função ``isGameOver''
+que impede que a jogada seja feita caso o tamanho de ``attempts'' seja
+igual ao valor de ``maxAttempts''.
+
+\begin{vdm_al}
+  public makeAPlay : seq1 of Color`Color ==> ()
+    makeAPlay (attempt) == ...
+  pre len attempt = attemptLength and
+    not isGameOver()
+  post attempts = attempts~ ^ [attempt];
+\end{vdm_al}
+
+\begin{vdm_al}
+  public isGameOver : () ==> bool
+    isGameOver () == ...
+  post RESULT = (isSolutionCracked() or len attempts = maxAttempts);
+\end{vdm_al}
+
+A restrição 6, que indica que o número de peças com a cor certa e no
+sítio certo de uma tentativa não pode ser superior ao tamanho da
+solução que está definida para o tabuleiro onde essa tentativa é
+feita.
+
+Isso é facilmente implementado através de uma pós-condição no operador
+``calculateRightColorsInRightPlaces''.
+
+\begin{vdm_al}
+  public calculateRightColorsInRightPlaces : seq of Color`Color ==> nat
+    calculateRightColorsInRightPlaces (attempt) == ...
+  pre len attempt = len solution
+  post RESULT <= len solution;
+\end{vdm_al}
+
+Da mesma forma, a restrição 7, que indica que o número de peças com a
+cor certa, mas que estão no sítio errado, de uma tentativa não pode
+ser superior ao tamanho da solução que está definida para o tabuleiro
+onde essa tentativa é feita é implementada através de uma pós-condição
+no operador ``calculateRightColorsInWrongPlaces''.
+
+\begin{vdm_al}
+  -- This formula is given in:
+  -- http://mathworld.wolfram.com/Mastermind.html
+  public calculateRightColorsInWrongPlaces : seq of Color`Color ==> nat
+    calculateRightColorsInWrongPlaces (attempt) == ...
+  pre len attempt = len solution
+  post RESULT <= len solution;
+\end{vdm_al}
+
+A restrição número 8 que indica que o número de equipas inscritas num
+campeonato tem que ser um número par igual ou superior a 2 está
+definida como uma invariante sobre a variável ``teams'' da classe
+``Championship''.
+
+\begin{vdm_al}
+  inv card teams >= and (card teams) mod 2 = 0;  
+\end{vdm_al}
+
+Foi também adicionada esta restrição na pré-condição do construtor
+``Championship(participants)''.
+
+\begin{vdm_al}
+  public Championship: set of String ==> Championship
+  Championship(participants) == ...
+  pre card participants >= 2 and (card participants) mod 2 = 0
+  post teams = participants;
+\end{vdm_al}
+
+Como existe também o operador ``addTeams'' que permite adicionar
+equipas ao campeonato depois deste ter sido criado, a restrição também
+teve que ser colocada nas pré-condições desse operador.
+
+\begin{vdm_al}
+  public addTeams : set of String ==> ()
+  addTeams(newTeams) == ...
+  pre (newTeams inter teams = {}) and (card newTeams) mod 2 = 0
+  post teams = teams~ union newTeams;
+\end{vdm_al}
+
+Finalmente, a última restrição que indica que todas as equipas que
+participam em jogos de campeonato têm que estar inscritas nesse
+campeonato é implementada através de uma invariante sobre a variável
+``games'' da classe ``Championship''.
+
+\begin{vdm_al}
+  inv forall game in set games & game.getParticipantTeams() subset teams;  
+\end{vdm_al}
+
+O operador ``getParticipantTeams'' está implementado na classe
+``Game'' e devolve um conjunto que indica as equipas que estão a
+participar nesse jogo.
+
+\begin{vdm_al}
+  public getParticipantTeams : () ==> set of String
+  getParticipantTeams () == return dom gameInstances
+  post RESULT = dom gameInstances;
+\end{vdm_al}
+
+Existe também na classe ``Championship'' dois operadores,
+``addQuickGame'' e ``addGame'', que adicionam jogos à variável
+``games'' de um campeonato.
+
+Como tal, é necessário verificar antes de se adicionar esses jogos à
+variável ``games'' se ambas as equipas pertencem ao conjunto de
+equipas indicado pela variável ``teams'' do campeonato a que se quer
+adicionar esse jogo.
+
+\begin{vdm_al}
+  public addQuickGame: String * String ==> Game
+  addQuickGame(team1, team2) == ...
+  pre {team1, team2} subset teams and
+    {team1, team2} not in set oldMatchups()
+  post RESULT in set games;
+
+\end{vdm_al}
+
+\begin{vdm_al}
+  public addGame : map String to (seq of Color`Color) ==> Game
+  addGame(teamsSolutions) == ...
+  pre dom teamsSolutions subset teams and
+    dom teamsSolutions not in set oldMatchups() and
+    forall solution in set rng teamsSolutions & len solution = Board`attemptLength
+  post RESULT in set games;
+\end{vdm_al}
+
+Foi também implementada esta restrição no construtor
+``Game(teamsSolutions, championship)'', impedindo assim o sistema de
+criar jogos com equipas que não participem no campeonato passado pelo
+argumento ``championship''.
+
+\begin{vdm_al}
+  public Game : map String to seq1 of Color`Color * Championship ==> Game
+  Game (teamsSolutions, championship) == ...
+
+  pre card (dom teamsSolutions) = 2 and
+    forall team in set dom teamsSolutions &
+      team in set championship.getTeams() and
+    forall solution in set rng teamsSolutions &
+      len solution = Board`attemptLength
+
+  post forall team in set (dom gameInstances) &
+    let opponentTeam = dom teamsSolutions \ {team} in
+      {gameInstances(team).getSolution()} =
+      rng (opponentTeam <: teamsSolutions);
+\end{vdm_al}
+

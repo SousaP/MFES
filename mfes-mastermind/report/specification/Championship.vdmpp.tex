@@ -1,0 +1,282 @@
+\begin{vdm_al}
+class Championship
+
+ types
+  public String = Utilities`String;
+
+ instance variables
+  private teams : set of String;
+  inv card teams >= 2 and (card teams) mod 2 = 0;
+
+  private games : set of Game := {};
+  inv forall game in set games & game.getParticipantTeams() subset teams;
+
+
+ operations
+
+  public Championship: set of String ==> Championship
+  Championship(participants) == (
+
+   teams := participants;
+
+  )
+  pre card participants >= 2 and (card participants) mod 2 = 0
+  post teams = participants;
+
+
+  -- Constructor needed to recreate a championship from the information of
+  -- a file
+  public Championship: set of String * set of Game ==> Championship
+  Championship(participants, gamesPlayed) == (
+   teams := participants;
+   games := gamesPlayed
+  )
+  pre (card participants) >= 2 and (card participants) mod 2 = 0 and
+   forall game in set gamesPlayed & game.getParticipantTeams() subset participants
+  post teams = participants and games = gamesPlayed;
+
+
+  public getTeams: () ==> set of String
+  getTeams() == (
+
+   return teams;
+
+  )
+  post RESULT = teams;
+
+
+  public getGames: () ==> set of Game
+  getGames() == (
+
+   return games;
+
+  )
+  post RESULT = games;
+
+
+  public addQuickGame: String * String ==> Game
+  addQuickGame(team1, team2) == (
+
+   dcl g : Game := new Game(
+    {team1 |-> Color`getRandomSequence(Board`attemptLength),
+     team2 |-> Color`getRandomSequence(Board`attemptLength)},
+    self);
+
+   games := games union {g};
+
+   return g;
+
+  )
+  pre {team1, team2} subset teams and
+   {team1, team2} not in set oldMatchups()
+  post RESULT in set games;
+
+
+  public addGame : map String to (seq of Color`Color) ==> Game
+  addGame(teamsSolutions) == (
+
+   dcl g : Game := new Game(teamsSolutions, self);
+
+   games := games union {g};
+
+   return g;
+
+  )
+  pre dom teamsSolutions subset teams and
+   dom teamsSolutions not in set oldMatchups() and
+   forall solution in set rng teamsSolutions & len solution = Board`attemptLength
+  post RESULT in set games;
+
+
+  public addTeams : set of String ==> ()
+  addTeams(newTeams) == (
+
+   teams := teams union newTeams;
+
+  )
+  pre (newTeams inter teams = {}) and (card newTeams) mod 2 = 0
+  post teams = teams~ union newTeams;
+
+  -- The codemaker gets one point for each guess a codebreaker makes. An
+  -- extra point is earned by the codemaker if the codebreaker doesn't
+  -- guess the pattern exactly in the last guess.
+  public getScore : String ==> nat
+  getScore (team) == (
+   dcl gamesPlayed : set of Game := gamesPlayedByTeam(team),
+    scoreByWinning : nat := 0,
+    scoreByUndefeated : nat := 0;
+
+    for board in getBoardsCrackedByOpponent(gamesPlayed, team) do
+     scoreByWinning := scoreByWinning + board.numberOfTriesMade();
+
+    for board in getBoardsUncrackedByOpponent(gamesPlayed, team) do
+     scoreByUndefeated := scoreByUndefeated + board.numberOfTriesMade()+1;
+
+    return scoreByWinning + scoreByUndefeated;
+
+  )
+  pre team in set teams;
+
+  private oldMatchups : () ==> set of set of String
+  oldMatchups () ==
+   return {oldGames.getParticipantTeams() | oldGames in set games}
+  post games = {} => RESULT = {};
+
+
+  public gamesPlayedByTeam : String ==> set of Game
+  gamesPlayedByTeam (team) ==
+   return {game | game in set games & team in set game.getParticipantTeams()}
+  post forall game in set RESULT
+   & team in set game.getParticipantTeams();
+
+
+  public getNumberOfTriesWinner : () ==> nat
+  getNumberOfTriesWinner () ==
+   let scoreBoard = getScoreboard()
+   in
+    return maximumValue(rng scoreBoard)
+  pre let scoreboard = getScoreboard()
+   in card dom (scoreboard :> {maximumValue(rng scoreboard)}) = 1;
+
+  public getScoreboard : () ==> map String to nat
+  getScoreboard () ==
+   return { team |-> getScore(team) | team in set teams };
+
+
+  -- Operators needed to write a Championship to a file
+  private teamsToString : () ==> String
+  teamsToString () ==
+   return Utilities`setToString[String](teams,
+    lambda x : String & "\"" ^ x ^ "\"");
+
+  -- private gamesToString : () ==> String
+  -- gamesToString () ==
+  -- return Utilities`setToString[Game](games,
+  --  lambda x : Game & x.dumpGameToString());
+  --
+  -- I wanted to implement "gamesToString" like this, but while it works
+  -- with VDMTools, it does not work with Overture for some strange reason.
+  -- Overture crashes with the following error:
+  -- Illegal clone: java.lang.NullPointerException
+  --
+  -- Main 206: Error evaluating code
+  -- Detailed Message: Illegal clone: java.lang.NullPointerException
+  --
+  -- So I needed to use the ugly implementation below, because it works in
+  -- both systems.
+  --  - Rolando
+
+  private gamesToString : () ==> String
+  gamesToString () ==
+   if card games = 0 then return "{}"
+   else (
+    dcl return_value : String := "{",
+     i : nat1 := 1;
+    for all game in set games do
+     if i < card games then (
+      return_value := return_value  ^ " " ^ game.dumpGameToString() ^ ", ";
+      i := i + 1;
+     )
+     else
+      return_value := return_value ^ " " ^ game.dumpGameToString() ^ "}";
+
+    return return_value;
+   );
+
+  public dumpChampionshipToString : () ==> String
+  dumpChampionshipToString() ==
+   return "new Championship(" ^ teamsToString() ^ ", " ^ gamesToString() ^ ")";
+
+
+  functions
+
+  private getBoardsUncrackedByOpponent : set of Game * String -> seq of Board
+  getBoardsUncrackedByOpponent (games, team) ==
+   if games = {} then []
+   else let game in set games in
+    let boardPlayedByOpponent = game.getBoardPlayedByOpponent(team) in
+     if boardPlayedByOpponent.isGameOver() and
+      not boardPlayedByOpponent.isSolutionCracked() then
+       [boardPlayedByOpponent] ^ getBoardsUncrackedByOpponent(games\{game}, team)
+     else
+      getBoardsUncrackedByOpponent(games\{game}, team)
+
+  post forall board in set elems RESULT & board.isGameOver() and not board.isSolutionCracked();
+
+
+  private getBoardsCrackedByOpponent : set of Game * String -> seq of Board
+  getBoardsCrackedByOpponent (games, team) ==
+   if games = {} then []
+   else let game in set games in
+    let boardPlayedByOpponent = game.getBoardPlayedByOpponent(team) in
+     if boardPlayedByOpponent.isGameOver() and
+      boardPlayedByOpponent.isSolutionCracked() then
+       [boardPlayedByOpponent] ^ getBoardsCrackedByOpponent(games\{game}, team)
+     else
+      getBoardsCrackedByOpponent(games\{game}, team)
+
+  post forall board in set elems RESULT & board.isGameOver() and board.isSolutionCracked();
+
+  
+  private maximumValue : set of nat -> nat
+  maximumValue (s) ==
+   if card s = 1 then
+    let x in set s in x
+   else
+    let x in set s in
+     let max = maximumValue(s\{x}) in
+      if x > max then
+       (*@\notcovered{x}@*)
+      else
+       max
+  pre s <> {}
+  post not exists element in set s & element > RESULT;
+
+ 
+end Championship
+\end{vdm_al}
+\bigskip
+\begin{longtable}{|l|r|r|}
+\hline
+Function or operation & Coverage & Calls \\
+\hline
+\hline
+Championship & 100.0\% & 5 \\
+\hline
+addGame & 100.0\% & 8 \\
+\hline
+addQuickGame & 100.0\% & 1 \\
+\hline
+addTeams & 100.0\% & 1 \\
+\hline
+dumpChampionshipToString & 100.0\% & 5 \\
+\hline
+gamesPlayedByTeam & 100.0\% & 16 \\
+\hline
+gamesToString & 100.0\% & 5 \\
+\hline
+getBoardsCrackedByOpponent & 100.0\% & 30 \\
+\hline
+getBoardsUncrackedByOpponent & 100.0\% & 30 \\
+\hline
+getGames & 100.0\% & 21 \\
+\hline
+getNumberOfTriesWinner & 100.0\% & 1 \\
+\hline
+getScore & 100.0\% & 16 \\
+\hline
+getScoreboard & 100.0\% & 2 \\
+\hline
+getTeams & 100.0\% & 36 \\
+\hline
+maximumValue & 96.7\% & 6 \\
+\hline
+oldMatchups & 100.0\% & 9 \\
+\hline
+teamsToString & 100.0\% & 5 \\
+\hline
+\hline
+Championship.vdmpp & 99.7\% & 197 \\
+\hline
+\end{longtable}
+

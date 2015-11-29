@@ -1,0 +1,238 @@
+\begin{vdm_al}
+class Board
+ types
+  public String = Utilities`String;
+
+ instance variables
+  private solution : seq1 of Color`Color;
+  inv len solution = attemptLength;
+
+  private attempts : seq of (seq1 of Color`Color) := [];
+  inv forall attempt in set elems attempts & len attempt = attemptLength and
+   len attempts <= maxAttempts;
+
+  private maxAttempts : nat1 := 12;
+  inv maxAttempts in set maxAttemptsAvailable;
+
+
+ operations
+
+
+  public Board : seq1 of Color`Color ==> Board
+  Board (correctPlay) == (
+   solution := correctPlay;
+   attempts := [];
+  )
+  pre len correctPlay = attemptLength
+  post solution = correctPlay and
+   attempts = [];
+
+
+  public Board : () ==> Board
+  Board() == (
+
+   solution := Color`getRandomSequence(attemptLength);
+   attempts := [];
+
+  )
+  post len solution = attemptLength and attempts = [];
+
+
+  public Board : seq1 of Color`Color * nat1 ==> Board
+  Board (correctPlay, maxNumberOfTries) == (
+   solution := correctPlay;
+   maxAttempts := maxNumberOfTries;
+  )
+  pre len correctPlay = attemptLength and
+   maxNumberOfTries in set maxAttemptsAvailable
+  post solution = correctPlay and
+   maxAttempts in set maxAttemptsAvailable;
+
+
+  -- Constructor needed to recreate a board from the information of a file
+  public Board : seq1 of Color`Color * nat1 * seq of (seq1 of Color`Color) ==> Board
+  Board (correctPlay, maxNumberOfTries, savedAttempts) == (
+   solution := correctPlay;
+   maxAttempts := maxNumberOfTries;
+   attempts := savedAttempts;
+  )
+  pre len correctPlay = attemptLength and
+   maxNumberOfTries in set maxAttemptsAvailable and
+   len savedAttempts <= maxNumberOfTries and
+   forall attempt in set elems savedAttempts & len attempt = attemptLength
+
+  post solution = correctPlay and
+   maxAttempts = maxNumberOfTries and
+   -- All elements of "attempts" need to be in the same position of the
+   -- elements of "savedAttempts"
+   numberOfMatchingElems[seq1 of Color`Color](attempts, savedAttempts) = len attempts;
+
+
+
+  public numberOfTriesRemaining : () ==> nat
+   numberOfTriesRemaining () == return maxAttempts - len attempts
+  pre (len attempts) <= maxAttempts
+  post RESULT = maxAttempts - len attempts;
+
+
+  public numberOfTriesMade : () ==> nat
+   numberOfTriesMade () == return len attempts
+  post RESULT = len attempts;
+
+
+  public makeAPlay : seq1 of Color`Color ==> ()
+   makeAPlay (attempt) == attempts := attempts ^ [attempt]
+  pre len attempt = attemptLength and
+   not isGameOver()
+  post attempts = attempts~ ^ [attempt];
+
+
+  -- Return true if the correct code has been found
+  public isSolutionCracked : () ==> bool
+   isSolutionCracked () == return solution in set elems attempts
+  post solution in set elems attempts => RESULT = true;
+
+
+  public isGameOver : () ==> bool
+   isGameOver () == return isSolutionCracked() or len attempts = maxAttempts
+  post RESULT = (isSolutionCracked() or len attempts = maxAttempts);
+
+
+  public calculateRightColorsInRightPlaces : seq of Color`Color ==> nat
+   calculateRightColorsInRightPlaces (attempt) ==
+    return numberOfMatchingElems[Color`Color](attempt, solution)
+  pre len attempt = len solution
+  post RESULT <= len solution;
+
+
+  -- This formula is given in:
+  -- http://mathworld.wolfram.com/Mastermind.html
+  public calculateRightColorsInWrongPlaces : seq of Color`Color ==> nat
+   calculateRightColorsInWrongPlaces (attempt) ==
+   -- Just a temporary variable to hold the value of the sum expression
+   -- (see previous URL)
+    (dcl temp : nat := 0;
+     for all color in set Color`Colors do
+      temp := temp +
+       Utilities`min(
+        countOccurences[Color`Color](solution, color),
+        countOccurences[Color`Color](attempt, color));
+     return temp - calculateRightColorsInRightPlaces(attempt);
+    )
+  pre len attempt = len solution
+  post RESULT <= len solution;
+
+
+  public getSolution : () ==> seq1 of Color`Color
+   getSolution () == return solution
+  post RESULT = solution;
+
+
+  public getAttempts : () ==> seq of (seq1 of Color`Color)
+   getAttempts () == return attempts
+  post RESULT = attempts;
+
+
+  public getMaxAttempts : () ==> nat1
+   getMaxAttempts () == return maxAttempts
+  post RESULT = maxAttempts;
+
+
+
+  -- Operators needed to write a Board to a file
+  public dumpBoardToString : () ==> String
+  dumpBoardToString () ==
+   return "new Board(\"" ^ solution ^ "\", " ^ maxAttemptsToString()
+    ^ ", " ^ attemptsToString() ^")";
+
+  private attemptsToString : () ==> String
+  attemptsToString () ==
+   return Utilities`seqToString[seq1 of Color`Color](attempts,
+    lambda x : String & "\"" ^ x ^ "\"");
+
+  private maxAttemptsToString : () ==> String
+  maxAttemptsToString () ==
+   if maxAttempts = 8 then return "8"
+   elseif maxAttempts = 10 then return "10"
+   else return "12"
+  pre maxAttempts = 8 or maxAttempts = 10 or maxAttempts = 12;
+
+
+ functions
+
+  -- Return the number of elements in the sequence that are a match both
+  -- in value and in position. For example: [1,2,3,4,5] and [4,4,3,5,2]
+  -- only has one element that matches both in value and in position (the
+  -- element 3).
+  private numberOfMatchingElems[@T] : seq of @T * seq of @T -> nat
+   numberOfMatchingElems (firstSeq, secondSeq) ==
+    if firstSeq = [] then
+     0
+    elseif hd firstSeq = hd secondSeq then
+     1 + numberOfMatchingElems[@T](tl firstSeq, tl secondSeq)
+    else
+     numberOfMatchingElems[@T](tl firstSeq, tl secondSeq)
+   pre (len firstSeq) = (len secondSeq)
+   post firstSeq = [] => RESULT = 0;
+
+  -- Return the number of times the element appears in the sequence
+  private countOccurences[@T] : seq of @T * @T -> nat
+   countOccurences (sequence, element) ==
+    if sequence = [] then
+     0
+    elseif hd sequence = element then
+     1 + countOccurences[@T](tl sequence, element)
+    else
+     countOccurences[@T](tl sequence, element)
+   post sequence = [] => RESULT = 0;
+
+
+ values
+  public attemptLength : nat1 = 4;
+  public maxAttemptsAvailable : set of nat1 = {8, 10, 12};
+
+end Board
+\end{vdm_al}
+\bigskip
+\begin{longtable}{|l|r|r|}
+\hline
+Function or operation & Coverage & Calls \\
+\hline
+\hline
+Board & 100.0\% & 18 \\
+\hline
+attemptsToString & 100.0\% & 18 \\
+\hline
+calculateRightColorsInRightPlaces & 100.0\% & 7 \\
+\hline
+calculateRightColorsInWrongPlaces & 100.0\% & 4 \\
+\hline
+countOccurences & 100.0\% & 240 \\
+\hline
+dumpBoardToString & 100.0\% & 18 \\
+\hline
+getAttempts & 100.0\% & 126 \\
+\hline
+getMaxAttempts & 100.0\% & 36 \\
+\hline
+getSolution & 100.0\% & 57 \\
+\hline
+isGameOver & 100.0\% & 96 \\
+\hline
+isSolutionCracked & 100.0\% & 215 \\
+\hline
+makeAPlay & 100.0\% & 62 \\
+\hline
+maxAttemptsToString & 100.0\% & 18 \\
+\hline
+numberOfMatchingElems & 100.0\% & 89 \\
+\hline
+numberOfTriesMade & 100.0\% & 8 \\
+\hline
+numberOfTriesRemaining & 100.0\% & 4 \\
+\hline
+\hline
+Board.vdmpp & 100.0\% & 1016 \\
+\hline
+\end{longtable}
+

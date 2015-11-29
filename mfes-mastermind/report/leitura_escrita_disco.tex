@@ -1,0 +1,511 @@
+Uma dos requisitos pedidos pelo enunciado deste trabalho era a
+capacidade de poder gravar campeonatos para o disco e restaurá-los a
+partir do disco.
+
+Infelizmente o código que implementa esse requisito só funciona quando
+corrido na interface VDMTools ou Overture, pois é convertido para
+código Java que não é válido, devido ao fato de este não conter um
+sistema de funções anónimas (também conhecidas por ``lambdas'').
+
+Esta secção serve então para explicar melhor o sistema criado para
+implementar esse sistema.
+
+\subsection{A teoria}
+
+Em primeiro lugar, é necessário recorrer à biblioteca standard
+\texttt{IO.vdmpp} do VDM que implementa o sistema de ``Input'' e
+``Output'' usado pela linguagem VDM, pelo que esta deverá estar
+importada no projeto.
+
+De seguida, iremos explicar como funciona o sistema de ``Input'' e
+``Output'' do VDM.
+
+Consideremos a seguinte classe escrita em VDM++:
+
+\begin{vdm_al}
+  class Foo
+    instance variables
+    bar : seq of Char;
+    
+    operations
+    Foo : nat ==> Foo
+    Foo : (quaz) ==
+      bar := quaz;
+  
+    getBar : () ==> nat
+    getBar () == return bar;
+  end Foo
+\end{vdm_al}
+
+Se no interpretador do VDMTools escrevermos:
+
+\begin{verbatim}
+  p new Foo("Hello, World!")
+\end{verbatim}
+
+O output será:
+
+\begin{verbatim}
+  objref3(Foo):
+  <  - Foo`bar = "Hello, World!" >
+\end{verbatim}
+
+Portanto, é criado um objecto do tipo ``Foo'' com o valor da variável
+``bar'' a 5.
+
+Sabendo que a função \texttt{IO`freadval[@T](seq of char)} lê o conteúdo
+de um ficheiro cujo nome é passado como seu argumento e passa esse
+conteúdo para o interpretador do VDMTools, então poderemos recriar
+este objecto desde que consigamos colocar num ficheiro a seguinte
+``string'':
+
+\begin{verbatim}
+  new Foo("Hello, World!")
+\end{verbatim}
+
+Uma forma simples de o fazer seria criar um operador
+``dumpFooToString'' que devolvesse uma ``string'' que permitisse
+recriar o objecto. Isto é feito usando o seguinte operador:
+
+\begin{vdm_al}
+  dumpFooToString : () ==> seq of char
+  dumpFooToString () ==
+    return "new Foo(\"" ^ bar ^ "\")"
+\end{vdm_al}
+
+Após adicionar este operador à classe ``Foo'' torna-se possível
+efetuar o seguinte no interpretador:
+
+\begin{verbatim}
+  p new Foo("Hello, World!").dumpFooToString()
+\end{verbatim}
+
+Que retorna a seguinte ``string'':
+
+\begin{verbatim}
+  "new Foo(\"Hello, World!\")"
+\end{verbatim}
+
+Se se tentasse escrever essa ``string'' para um ficheiro (através do
+uso
+do operador \texttt{IO`fwriteval}) o operador
+\texttt{IO`freadeval} não o conseguiria ler devido ao fato de os
+caracteres \texttt{"} estarem escritos assim: \verb=\"= .
+
+Felizmente, a biblioteca ``IO'' disponibiliza um operador chamado
+\texttt{IO`fecho} que escreve para um ficheiro uma ``string'', mas
+removendo os caracteres \verb=\=.
+
+Portanto para poder gravar uma classe para o disco e depois voltar a
+ler-la temos que realizar os seguintes passos:
+
+\begin{enumerate}
+\item Adicionar a biblioteca \texttt{IO.vdmpp} ao projeto;
+\item Adicionar um construtor à classe que permita repor os valores de
+  todas as suas variáveis internas;
+\item Adicionar um operador à classe que permita escrever uma ``string''
+  no formato ``new Foo(arg1, arg2, \ldots, argN)'';
+\item Escrever essa ``string'' para um ficheiro, utilizando o operador
+  \texttt{IO`fecho};
+\item Ler de volta essa ``string'' utilizando o operador
+  \texttt{IO`freadval}.
+\end{enumerate}
+
+\subsection{A prática}
+
+No exemplo mostrado anteriormente a criação do operador
+``dumpFooToString'' era simples devido ao fato de requerer
+simplesmente uma concatenação de três sequências de caracteres: a
+sequência \texttt{new Foo("} seria concatenada com a sequência
+guardada em ``bar'' que por sua vez seria concatenada com a sequência
+\texttt{")} dando assim origem à ``string'' necessária.
+
+Infelizmente o sistema implementado neste relatório não contêm só
+variáveis do tipo ``String'', mas também funções finitas e
+conjuntos. Será por isso implementar funções que convertam esses tipos
+de variáveis para ``String''.
+
+Para isso foram implementadas um conjunto de funções polimórficas na
+classe ``Utilities''.
+
+A função ``seqToString'' recebe uma sequência de variáveis de um dado
+tipo e uma função que ao receber uma variável desse tipo a converte
+para uma ``string'' que a representa.
+
+\begin{vdm_al}
+  static public seqToString[@T] : seq of [@T] * (@T -> String) -> String
+  seqToString (sequence, printer) ==
+    if sequence = [] then "[]"
+    else "[" ^ auxSeqToString[@T](sequence, printer) ^ "]";
+\end{vdm_al}
+
+No entanto a função ``seqToString'' não é mais do que uma simples
+interface para a função ``auxSeqToString'', com a particularidade de
+tratar da situação em que o argumento ``sequence'' é vazio.
+
+A função ``auxSeqToString'' é simplesmente uma função recursiva que
+itera pelos elementos existentes na sequência passada pelo argumento
+``sequence'' e armazena o valor de retorno da função ``printer''
+quando chamada com esse elemento. Esses valores de retorno são
+separados por \texttt{", "}.
+
+\begin{vdm_al}
+  static private auxSeqToString[@T] : seq1 of [@T] * (@T -> String) -> String
+  auxSeqToString (sequence, printer) ==
+    if len sequence = 1 then
+      printer(hd sequence)
+    else
+      printer(hd sequence) ^ ", " ^ auxSeqToString[@T](tl sequence, printer);
+\end{vdm_al}
+
+No entanto não é necessário implementar só a conversão de sequências
+para ``strings'', sendo também necessário implementar a conversão de
+conjuntos para ``strings''.
+
+Para isso foi escrito também a função ``setToString'' que reaproveita
+a função ``auxSeqToString'' para converter um set numa ``string''.
+
+\begin{vdm_al}
+  static public setToString[@T] : set of @T * (@T -> String) -> String
+  setToString(s, printer) ==
+    if s = {} then "{}"
+    else "{" ^ auxSeqToString[@T](setToSeq[@T](s), printer) ^ "}";
+\end{vdm_al}
+
+Como se pode ver, a função ``setToString'' é semelhante à função
+``seqToString'': ambas recebem um argumento para converter e uma
+função que imprime as variáveis desse argumento para uma ``string'',
+ambas tratam do caso em que o conjunto é vazio e ambas remetem o
+trabalho para uma função auxiliar.
+
+No entanto a função ``setToString'' tem uma particularidade: em vez de
+implementar uma função auxiliar ``auxSetToString'', esta chama a
+função ``auxSeqToString'' depois de converter o conjunto que recebe no
+argumento ``s'' para uma sequência.
+
+Esta conversão é efetuada através da função ``setToSeq'' que
+simplesmente extrai cada elemento do conjunto individualmente e
+coloca-os em sequências que depois são concatenadas umas com as outras
+para dar resultado a uma sequência que contêm todos os elementos dos
+conjunto.
+
+Como a ordem dos elementos de um conjunto não é importante, a ordem
+pela qual são convertidos para uma sequência também não o é.
+
+Tendo agora estas funções definidas torna-se mais simples de escrever
+os objetos das classes no disco.
+
+Começaremos então pela classe mais simples: a classe ``Board''.
+
+A classe ``Board'' contêm três variáveis internas:
+
+\begin{itemize}
+\item A variável ``solution'' do tipo \texttt{seq1 of Color`Color};
+\item A variável ``attempts'' do tipo \texttt{seq of (seq1 of Color`Color)};
+\item A variável ``maxAttempts'' do tipo \texttt{nat1}.
+\end{itemize}
+
+É por isso necessário adicionar o seguinte construtor à classe
+``Board'':
+
+\begin{vdm_al}
+  -- Constructor needed to recreate a board from the information of a file
+  public Board : seq1 of Color`Color * nat1 * seq of (seq1 of Color`Color) ==> Board
+  Board (correctPlay, maxNumberOfTries, savedAttempts) == (
+    solution := correctPlay;
+    maxAttempts := maxNumberOfTries;
+    attempts := savedAttempts;
+  )
+  pre len correctPlay = attemptLength and
+    maxNumberOfTries in set maxAttemptsAvailable and
+    len savedAttempts <= maxNumberOfTries and
+    forall attempt in set elems savedAttempts & len attempt = attemptLength
+
+  post solution = correctPlay and
+    maxAttempts = maxNumberOfTries and
+    -- All elements of "attempts" need to be in the same position of the
+    -- elements of "savedAttempts"
+    numberOfMatchingElems[seq1 of Color`Color](attempts, savedAttempts) = len attempts;
+\end{vdm_al}
+
+Para que ninguém possa alterar os dados que estão no ficheiro de forma
+a quebrar as restrições da classe ``Board'', este construtor também
+contêm pré e pós condições que restringem os dados que ele pode receber.
+
+O operador ``dumpBoardToString'' é o operador responsável por criar
+uma ``string'' com o seguinte formato:
+
+\begin{verbatim}
+  new Board(<solution>, <maxAttempts>, <attempts>)
+\end{verbatim}
+
+Como se pode ver, este operador utiliza dois operadores auxiliares: o
+``maxAttemptsToString'' e o ``attemptsToString'', que convertem,
+respetivamente as variáveis ``maxAttempts'' e ``attempts'' para uma
+``string''. De notar que como a variável ``solution'' já é do tipo
+``string'' esta não precisa de ser convertida.
+
+\begin{vdm_al}
+  public dumpBoardToString : () ==> String
+  dumpBoardToString () ==
+    return "new Board(\"" ^ solution ^ "\", " ^ maxAttemptsToString()
+      ^ ", " ^ attemptsToString() ^")";
+\end{vdm_al}
+
+O operador ``maxAttemptsToString'' é simplesmente uma expressão do
+tipo ``if'' que devolve uma representação em ``string'' do valor que a
+variável ``maxAttempts'' tem neste tabuleiro.
+
+
+\begin{vdm_al}
+  private maxAttemptsToString : () ==> String
+  maxAttemptsToString () ==
+    if maxAttempts = 8 then return "8"
+    elseif maxAttempts = 10 then return "10"
+    else return "12"
+  pre maxAttempts = 8 or maxAttempts = 10 or maxAttempts = 12;
+\end{vdm_al}
+
+Por outro lado o operador ``attemptsToString'' utiliza a função
+``seqToString'' já mostrada.
+
+\begin{vdm_al}
+  private attemptsToString : () ==> String
+  attemptsToString () ==
+    return Utilities`seqToString[seq1 of Color`Color](attempts,
+      lambda x : String & "\"" ^ x ^ "\"");
+\end{vdm_al}
+
+De seguida iremos analisar a classe ``Game''.
+
+Esta classe só tem uma variável interna: a variável ``gameInstances''
+que é uma variável do tipo \texttt{map String to Board}.
+
+Por isso o construtor a adicionar à classe ``Game'' apenas recebe um
+argumento.
+
+
+\begin{vdm_al}
+  -- Constructor needed to recreate a game from the information of a file
+  public Game : map String to Board ==> Game
+  Game (storedGameInstances) ==
+    gameInstances := storedGameInstances
+  pre card (dom storedGameInstances) = 2
+  post gameInstances = storedGameInstances;
+\end{vdm_al}
+
+Tal como aconteceu com a classe ``Board'' este construtor garante que
+a informação lida do disco cumpre com as restrições definidas para as
+variáveis da classe ``Game'', com uma exceção: como a classe ``Game''
+não guarda em nenhuma variável a informação sobre o campeonato a que
+pertence, este construtor não tem forma de saber se as equipas que
+recebe pertencem de fato ao campeonato. Como será visto mais à frente,
+é da responsabilidade da classe ``Championship'' garantir que as
+equipas estão inscritas em si quando esta cria os objetos da classe
+``Game'' a partir de um ficheiro.
+
+Tal como já tinha acontecido com a classe ``Board'', também a classe
+``Game'' contêm uma operação ``dumpGameToString''.
+
+\begin{vdm_al}
+  public dumpGameToString : () ==> String
+  dumpGameToString () == return "new Game(" ^ dumpGameInstanceToString() ^ ")";
+\end{vdm_al}
+
+Felizmente conhece-se \emph{à priori} a estrutura da variável
+``gameInstances'', por isso pode-se escrever o operador
+``dumpGameInstanceToString'' sem ter que utilizar funções semelhantes
+a ``setToString'' ou ``seqToString''.
+
+É também importante reparar que neste operador é chamado o operador
+``dumpBoardToString'' definido anteriormente que converte um objeto do
+tipo ``Board'' para uma ``string'' que pode ser posterior lida pelo
+interpretador do VDM.
+
+\begin{vdm_al}
+  private dumpGameInstanceToString : () ==> String
+  dumpGameInstanceToString () ==
+    let {team1, team2} = dom gameInstances in
+    return "{\"" ^ team1 ^ "\" |-> " ^ gameInstances(team1).dumpBoardToString() ^ ", "
+      ^ "\"" ^ team2 ^ "\" |-> " ^ gameInstances(team2).dumpBoardToString() ^ "}"
+  pre card (dom gameInstances) = 2;
+\end{vdm_al}
+
+Finalmente a classe ``Championship'' contêm duas variáveis internas:
+
+\begin{itemize}
+\item A variável ``teams'' do tipo \texttt{set of String};
+\item A variável ``games'' do tipo \texttt{set of Game}.
+\end{itemize}
+
+Portanto o construtor que irá recriar um campeonato a partir do
+ficheiro será este:
+
+\begin{vdm_al}
+  -- Constructor needed to recreate a championship from the information of
+  -- a file
+  public Championship: set of String * set of Game ==> Championship
+  Championship(participants, gamesPlayed) == (
+    teams := participants;
+    games := gamesPlayed
+  )
+  pre (card participants) >= 2 and (card participants) mod 2 = 0 and
+    forall game in set gamesPlayed & game.getParticipantTeams() subset participants
+  post teams = participants and games = gamesPlayed;
+\end{vdm_al}
+
+De notar que a restrição que o construtor ``Game'' mencionado
+anteriormente não podia garantir (as equipas que participam no jogo
+estão inscritas no campeonato) é verificada aqui graças à pré-condição
+deste construtor. Recordar que, para além deste construtor, a variável
+``games'' da classe ``Championship'' também contêm uma invariante
+sobre ela que garante que todas as equipas que estão nos jogos aí
+guardados estão inscritos no campeonato.
+
+Tal como acontecia com as classes ``Board'' e ``Game'', a conversão de
+um campeonato requer a criação de um operador
+``dumpChampionshipToString''.
+
+
+\begin{vdm_al}
+  public dumpChampionshipToString : () ==> String
+  dumpChampionshipToString() ==
+    return "new Championship(" ^ teamsToString() ^ ", " ^ gamesToString() ^ ")";
+\end{vdm_al}
+
+O operador ``teamsToString'' simplesmente chama a função
+``setToString'' mostrada anterior para converter a variável ``teams''
+para uma ``string''.
+
+\begin{vdm_al}
+  private teamsToString : () ==> String
+    teamsToString () ==
+      return Utilities`setToString[String](teams,
+        lambda x : String & "\"" ^ x ^ "\"");
+\end{vdm_al}
+
+Seria de esperar que o operador ``gamesToString'' pudesse ser
+implementado de forma análoga ao operador ``teams\-ToString'', ou seja,
+com uma implementação que usasse a função ``setToString''.
+
+\begin{vdm_al}
+  private gamesToString : () ==> String
+  gamesToString () ==
+    return Utilities`setToString[Game](games, lambda x : Game & x.dumpGameToString());
+\end{vdm_al}
+
+E enquanto que esta definição funciona no VDMTools, quando ela é
+testada no software Overture, este dá o seguinte erro no seu
+\emph{engine}:
+
+\begin{verbatim}
+  Overture crashes with the following error:
+  Illegal clone: java.lang.NullPointerException
+
+  Main 206: Error evaluating code
+  Detailed Message: Illegal clone: java.lang.NullPointerException
+\end{verbatim}
+
+Por essa razão foi necessário implementar o operador ``gamesToString''
+num estilo de programação imperativo.
+
+\begin{vdm_al}
+  private gamesToString : () ==> String
+  gamesToString () ==
+    if card games = 0 then return "{}"
+    else (
+      dcl return_value : String := "{",
+        i : nat1 := 1;
+      for all game in set games do
+        if i < card games then (
+          return_value := return_value  ^ " " ^ game.dumpGameToString() ^ ", ";
+          i := i + 1;
+        )
+        else
+          return_value := return_value ^ " " ^ game.dumpGameToString() ^ "}";
+
+      return return_value;
+   );
+\end{vdm_al}
+
+É também devido a este erro no Overture que a função ``setToString''
+não aparece total coberta nos testes, pois enquanto que existem testes
+que de fato testam a condição de chamar a função ``setToString'' com
+um conjunto vazio, estes provocam erros no Overture, que é a
+ferramenta usada neste trabalho para gerar a cobertura de código. 
+
+
+Como demonstração desta funcionalidade de escrita e leitura de objetos
+para o disco, fica aqui um registo de uma sessão do utilizador com o
+interpretador do VDMTools onde é mostrada a escrita de um campeonato
+para o disco e a sua leitura.
+
+De notar que no final, os campeonatos nas variáveis ``c'' e ``f'' são
+idênticos.
+
+O texto a negrito corresponde a dados introduzidos pelo utilizador no
+interpretador do VDMTools.
+
+\begin{Verbatim}[commandchars=+*/]
+Initializing specification ... 
+done
+>> +textbf*create c := new Championship({"lorem", "ipsum"})/
+>> +textbf*print c.addGame({"lorem" |-> "bbrr", "ipsum" |-> "gmgg"})/
+objref12(Game):
+  <  - Game`gameInstances = { "ipsum" |-> 
+        objref14(Board):
+          <  - Board`attempts = [  ],
+             - Board`solution = "bbrr",
+             - Board`maxAttempts = 12 >
+,
+      "lorem" |-> 
+        objref13(Board):
+          <  - Board`attempts = [  ],
+             - Board`solution = "gmgg",
+             - Board`maxAttempts = 12 >
+ } >
+
+>> +textbf*print c/
+objref11(Championship):
+  <  - Championship`games = { objref12(Game):
+        <  - Game`gameInstances = { "ipsum" |-> 
+              objref14(Board):
+                <  - Board`attempts = [  ],
+                   - Board`solution = "bbrr",
+                   - Board`maxAttempts = 12 >
+,
+            "lorem" |-> 
+              objref13(Board):
+                <  - Board`attempts = [  ],
+                   - Board`solution = "gmgg",
+                   - Board`maxAttempts = 12 >
+ } >
+ },
+     - Championship`teams = { "ipsum", "lorem" } >
+
+>> +textbf*print IO`fecho("champ1.txt", c.dumpChampionshipToString(), <start>)/
+true
+>> +textbf*create f := IO`freadval[Championship]("champ1.txt").#2/
+>> +textbf*print f/
+objref20(Championship):
+  <  - Championship`games = { objref19(Game):
+        <  - Game`gameInstances = { "ipsum" |-> 
+              objref18(Board):
+                <  - Board`attempts = [  ],
+                   - Board`solution = "bbrr",
+                   - Board`maxAttempts = 12 >
+,
+            "lorem" |-> 
+              objref17(Board):
+                <  - Board`attempts = [  ],
+                   - Board`solution = "gmgg",
+                   - Board`maxAttempts = 12 >
+ } >
+ },
+     - Championship`teams = { "ipsum", "lorem" } >
+\end{Verbatim}
+
+% No final, o disco contêm um ficheiro ``champ1.txt'' com o seguinte
+% conteúdo:
+
+

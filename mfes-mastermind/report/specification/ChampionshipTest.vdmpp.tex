@@ -1,0 +1,276 @@
+\begin{vdm_al}
+class ChampionshipTest
+ types
+  public String = Utilities`String;
+
+ operations
+ static public AssertTrue : bool ==> ()
+  AssertTrue(a) == return
+ pre a;
+
+
+ static public runAllTests : () ==> ()
+ runAllTests () == (
+  testNewChampionship1();
+  testNewChampionship2();
+  testAddGame1();
+  testAddGame2();
+  testCalculateScores();
+  testReadSimpleChampionshipFromFile();
+  testReadChampionshipWithGamesFromFile();
+  testReadNormalChampionshipFromFile();
+ );
+
+
+ static public testNewChampionship1 : () ==> ()
+ testNewChampionship1() ==
+  ( dcl c : Championship := new Championship({"Spartans","Romans"});
+
+   AssertTrue(card c.getTeams() = 2);
+   AssertTrue(c.getTeams() = {"Spartans", "Romans"});
+   AssertTrue(c.getScore("Spartans") = 0);
+   AssertTrue(c.getScore("Romans") = 0);
+
+  );
+
+
+ static public testNewChampionship2 : () ==> ()
+ testNewChampionship2() ==
+  ( dcl c : Championship := new Championship({"Spartans", "Romans"});
+
+   AssertTrue(card c.getTeams() = 2);
+   AssertTrue(c.getTeams() = {"Spartans", "Romans"});
+   c.addTeams({"Gauls", "Greeks"});
+   AssertTrue(card c.getTeams() = 4);
+   AssertTrue({"Gauls", "Greeks"} subset c.getTeams());
+
+  );
+
+
+ static public testAddGame1 : () ==> ()
+ testAddGame1() ==
+  ( dcl c : Championship := new Championship({"Spartans", "Romans"}),
+   g  : Game  := c.addQuickGame("Spartans","Romans"),
+   b1 : Board := g.getBoardPlayedByTeam("Spartans"),
+   b2 : Board := g.getBoardPlayedByTeam("Romans");
+
+   AssertTrue((g.getParticipantTeams() subset c.getTeams()));
+   AssertTrue(g in set c.getGames());
+
+   AssertTrue(b1.isSolutionCracked() = false);
+   AssertTrue(b2.isSolutionCracked() = false);
+
+  );
+
+
+ static public testAddGame2 : () ==> ()
+ testAddGame2() ==
+  ( dcl solSpartans : seq1 of Color`Color := ['b', 'b', 'r', 'b'],
+   solRomans : seq1 of Color`Color := ['r', 'r', 'b', 'r'],
+   c : Championship := new Championship({"Spartans", "Romans"}),
+   g : Game := c.addGame({"Spartans" |-> solSpartans, "Romans" |-> solRomans}),
+   b1 : Board := g.getBoardPlayedByTeam("Spartans"),
+   b2 : Board := g.getBoardPlayedByTeam("Romans");
+
+   AssertTrue((g.getParticipantTeams() subset c.getTeams()));
+
+   AssertTrue(b1.isSolutionCracked() = false);
+   AssertTrue(b2.isSolutionCracked() = false);
+
+   AssertTrue(b1.getSolution() = solRomans);
+   AssertTrue(b2.getSolution() = solSpartans);
+
+   AssertTrue(c.getScore("Spartans") = 0);
+   AssertTrue(c.getScore("Romans") = 0);
+
+  );
+
+
+ static public testCalculateScores : () ==> ()
+ testCalculateScores () == (
+   dcl c1 : Championship := new Championship({"lorem", "ipsum", "foo", "bar"}),
+   g1 : Game := c1.addGame({"lorem" |-> "bbbb", "ipsum" |-> "rrrr"}),
+   g2 : Game := c1.addGame({"foo" |-> "rgrg", "bar" |-> "mymy"});
+
+   g1.getBoardPlayedByTeam("lorem").makeAPlay("rggg");
+
+   -- "ipsum" cracks the code in 5 tries so "lorem" gains 5 points
+   g1.getBoardPlayedByTeam("ipsum").makeAPlay("bbrg");
+   g1.getBoardPlayedByTeam("ipsum").makeAPlay("mrob");
+   g1.getBoardPlayedByTeam("ipsum").makeAPlay("bobm");
+   g1.getBoardPlayedByTeam("ipsum").makeAPlay("bgbm");
+   g1.getBoardPlayedByTeam("ipsum").makeAPlay("bbbb");
+
+   -- "foo" can't crack this board, so "bar" gains 13 points
+   g2.getBoardPlayedByTeam("foo").makeAPlay("ggym");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("yomo");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("ggbb");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("royy");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("mgby");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("gror");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("grgr");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("grrr");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("grgr");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("ggrr");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("grgg");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("yyyy");
+
+   g2.getBoardPlayedByTeam("bar").makeAPlay("mbrb");
+   g2.getBoardPlayedByTeam("bar").makeAPlay("bybb");
+   g2.getBoardPlayedByTeam("bar").makeAPlay("ggry");
+   g2.getBoardPlayedByTeam("bar").makeAPlay("rmom");
+
+   AssertTrue(c1.getScore("lorem") = 5);
+   AssertTrue(c1.getScore("ipsum") = 0);
+   AssertTrue(c1.getScore("foo") = 0);
+   AssertTrue(c1.getScore("bar") = 13);
+
+   AssertTrue(c1.getNumberOfTriesWinner() = 13);
+  );
+
+
+ static public testReadSimpleChampionshipFromFile : () ==> ()
+ testReadSimpleChampionshipFromFile () == (
+  writeAndReadChampionshipFromFile("simpleChampionship1.txt",
+   new Championship({"lorem", "ipsum"}));
+  writeAndReadChampionshipFromFile("simpleChampionship2.txt",
+   new Championship({"lorem", "ipsum", "foo", "bar"}));
+ );
+
+ static public testReadChampionshipWithGamesFromFile : () ==> ()
+ testReadChampionshipWithGamesFromFile () == (
+  dcl c1 : Championship := new Championship({"lorem", "ipsum"}),
+   c2 : Championship := new Championship({"lorem", "ipsum", "foo", "bar"}),
+   g1 : Game := c1.addGame({"lorem" |-> "bbbb", "ipsum" |-> "rrrr"}),
+   g2 : Game := c2.addGame({"lorem" |-> "bbbb", "ipsum" |-> "rrrr"}),
+   g3 : Game := c2.addGame({"foo" |-> "rgrg", "ipsum" |-> "mymy"});
+
+   writeAndReadChampionshipFromFile("championshipWithGames1.txt", c1);
+   writeAndReadChampionshipFromFile("championshipWithGames2.txt", c2);
+  );
+
+ static public testReadNormalChampionshipFromFile : () ==> ()
+ testReadNormalChampionshipFromFile () == (
+  dcl c1 : Championship := new Championship({"lorem", "ipsum", "foo", "bar"}),
+   g1 : Game := c1.addGame({"lorem" |-> "bbbb", "ipsum" |-> "rrrr"}),
+   g2 : Game := c1.addGame({"foo" |-> "rgrg", "bar" |-> "mymy"});
+
+   g1.getBoardPlayedByTeam("lorem").makeAPlay("rrrr");
+
+   g1.getBoardPlayedByTeam("ipsum").makeAPlay("bbrg");
+   g1.getBoardPlayedByTeam("ipsum").makeAPlay("mrob");
+   g1.getBoardPlayedByTeam("ipsum").makeAPlay("bobm");
+   g1.getBoardPlayedByTeam("ipsum").makeAPlay("bgbm");
+   g1.getBoardPlayedByTeam("ipsum").makeAPlay("bbbb");
+
+   g2.getBoardPlayedByTeam("foo").makeAPlay("ggym");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("yomo");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("ggbb");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("royy");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("mgby");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("gror");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("grgr");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("grrr");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("grgr");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("ggrr");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("grgg");
+   g2.getBoardPlayedByTeam("foo").makeAPlay("yyyy");
+
+   g2.getBoardPlayedByTeam("bar").makeAPlay("mbrb");
+   g2.getBoardPlayedByTeam("bar").makeAPlay("bybb");
+   g2.getBoardPlayedByTeam("bar").makeAPlay("ggry");
+   g2.getBoardPlayedByTeam("bar").makeAPlay("rmom");
+
+   writeAndReadChampionshipFromFile("normalChampionship1.txt", c1);
+  );
+
+ static private writeAndReadChampionshipFromFile : String * Championship ==> ()
+ writeAndReadChampionshipFromFile (filename, championship) == (
+  dcl io : IO := new IO(),
+  writeSuccess : bool := io.fecho(filename, championship.dumpChampionshipToString(), <start>);
+
+  -- Check if the file was correctly created
+  AssertTrue(writeSuccess = true);
+
+  let mk_(readSuccess, championshipFromDisk) = io.freadval[Championship](filename) in (
+   -- Check if the file was correctly read
+   AssertTrue(readSuccess = true);
+
+   -- Perform consistency checks
+   AssertTrue(championship.getTeams() = championshipFromDisk.getTeams());
+
+   AssertTrue(card championship.getGames() = card championshipFromDisk.getGames());
+   AssertTrue(forall i in set championship.getGames() &
+    exists1 j in set championshipFromDisk.getGames() &
+    isSameGame(i, j));
+   )
+  );
+
+
+ functions
+
+ static private isSameGame : Game * Game -> bool
+ isSameGame (game1, game2) ==
+  -- Both games must have the same teams playing
+  game1.getParticipantTeams() = game2.getParticipantTeams() and
+
+  -- The board played by each team must be the same
+  forall team in set game1.getParticipantTeams() &
+   isSameBoard(game1.getBoardPlayedByTeam(team),
+    game2.getBoardPlayedByTeam(team));
+
+
+ static private isSameBoard : Board * Board -> bool
+ isSameBoard (board1, board2) ==
+  -- Both boards must have he same solution
+  board1.getSolution() = board2.getSolution() and
+
+  -- Both boards must have the same number of maximum attempts
+  board1.getMaxAttempts() = board2.getMaxAttempts() and
+
+  -- Both boards must have the same number of attempts
+  len board1.getAttempts() = len board2.getAttempts() and
+
+  -- Those attempts must be the same in both boards
+  forall i in set inds board1.getAttempts() &
+   board1.getAttempts()(i) = board2.getAttempts()(i);
+
+end ChampionshipTest
+\end{vdm_al}
+\bigskip
+\begin{longtable}{|l|r|r|}
+\hline
+Function or operation & Coverage & Calls \\
+\hline
+\hline
+AssertTrue & 100.0\% & 49 \\
+\hline
+isSameBoard & 100.0\% & 20 \\
+\hline
+isSameGame & 100.0\% & 18 \\
+\hline
+runAllTests & 100.0\% & 1 \\
+\hline
+testAddGame1 & 100.0\% & 1 \\
+\hline
+testAddGame2 & 100.0\% & 1 \\
+\hline
+testCalculateScores & 100.0\% & 1 \\
+\hline
+testNewChampionship1 & 100.0\% & 1 \\
+\hline
+testNewChampionship2 & 100.0\% & 1 \\
+\hline
+testReadChampionshipWithGamesFromFile & 100.0\% & 1 \\
+\hline
+testReadNormalChampionshipFromFile & 100.0\% & 1 \\
+\hline
+testReadSimpleChampionshipFromFile & 100.0\% & 1 \\
+\hline
+writeAndReadChampionshipFromFile & 100.0\% & 5 \\
+\hline
+\hline
+ChampionshipTest.vdmpp & 100.0\% & 101 \\
+\hline
+\end{longtable}
+

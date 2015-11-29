@@ -1,0 +1,623 @@
+De modo a melhorar a confiança no modelo escrito em VDM++ foram
+criadas classes que implementam uma bateria de testes.
+
+Existem duas classes de testes, mais uma terceira serve de ponto de
+entrada para executar os testes todos com um só comando.
+
+\subsection{BoardTest}
+
+Para facilitar a escrita de testes, é utilizado um tipo auxiliar ``String''.
+
+\begin{vdm_al}
+  class BoardTest
+    types
+      public String = Utilities`String;
+\end{vdm_al}
+
+É também criado um operador ``AssertTrue'' que permite testar qualquer
+expressão que retorne um valor do tipo ``bool'' e verificar se esta
+devolve ``true''.
+
+\begin{vdm_al}
+    operations
+    static public AssertTrue : bool ==> ()
+      AssertTrue(a) == return
+    pre a;
+\end{vdm_al}
+  
+O operador ``runAllTests'' serve de ponto de entrada para esta classe,
+pois executa todos os testes definidos nela.
+
+\begin{vdm_al}
+    static public runAllTests : () ==> ()
+      runAllTests () == (
+        testGoodGame1();
+        testGoodGame2();
+        testGoodGame3();
+        testGoodGame4();
+        testGoodGame5();
+        testRightColorsInRightPlaces();
+        testRightColorsInWrongPlaces();
+        testReadSimpleBoardFromFile();
+        testReadMaxAttemptsChangedBoardFromFile();
+        testReadNormalBoardFromFile();
+      );
+\end{vdm_al}
+
+O teste ``testGoodGame1'' simplesmente testa se é possível fazer
+jogadas e descobrir o código de um tabuleiro.  
+
+
+\begin{vdm_al}
+    static public testGoodGame1 : () ==> ()
+    testGoodGame1 () ==
+    ( dcl b : Board := new Board(['b', 'b', 'b', 'b']);
+      b.makeAPlay(['b', 'b', 'b', 'b']);
+      AssertTrue(b.isSolutionCracked());
+    );
+\end{vdm_al}
+
+O teste ``testGoodGame2'' verifica se as jogadas estão a ser colocadas
+na variável ``attempts'' da classe ``Board''. Isto é verificado
+através do uso do operador ``numberOfTriesRemaining''.  
+  
+\begin{vdm_al}
+    static public testGoodGame2 : () ==> ()
+    testGoodGame2 () ==
+    ( dcl b : Board := new Board(['b', 'b', 'b', 'b']);
+      AssertTrue(b.numberOfTriesRemaining() = 12);
+      b.makeAPlay(['b', 'b', 'b', 'b']);
+      AssertTrue(b.numberOfTriesRemaining() = 11);
+    );
+\end{vdm_al}  
+  
+O teste ``testGoodGame3'' é semelhante ao ``testGoodGame2'', mas
+verifica se a variável ``attempts'' foi atualizada através do uso do
+operador ``numberOfTriesMade''.
+  
+\begin{vdm_al}
+    static public testGoodGame3 : () ==> ()
+    testGoodGame3 () ==
+    ( dcl b : Board := new Board(['b', 'r', 'y', 'o']);
+      AssertTrue(b.numberOfTriesMade() = 0);
+      b.makeAPlay(['b', 'b', 'b', 'b']);
+      AssertTrue(b.numberOfTriesMade() = 1);
+    );
+\end{vdm_al}
+  
+O teste ``testGoodGame4'' permite testar se é possível criar
+tabuleiros de tamanhos diferentes ao tamanho padrão (que neste caso é
+12).
+
+De notar que o tamanho do tabuleiro só pode ser 8, 10 ou 12.
+
+\begin{vdm_al}
+    static public testGoodGame4 : () ==> ()
+    testGoodGame4 () ==
+    ( dcl b : Board := new Board(['b', 'r', 'y', 'o'], 10);
+      AssertTrue(b.numberOfTriesRemaining() = 10);
+      b.makeAPlay(['b', 'b', 'b', 'b']);
+      AssertTrue(b.numberOfTriesRemaining() = 9);
+  
+    );
+\end{vdm_al}
+  
+O teste ``testGoodGame5'' verifica se num tabuleiro com uma solução
+gerada aleatoriamente, o tamanho dessa solução continua a ser válido.
+
+\begin{vdm_al}
+    static public testGoodGame5 : () ==> ()
+    testGoodGame5 () ==
+      let b = new Board()
+        in
+        AssertTrue (len b.getSolution() = Board`attemptLength);
+\end{vdm_al}
+
+O teste ``testRightColorsInRightPlaces'' verifica se o operador
+``calculateRightColorsInRightPlaces'' está a funcionar corretamente.
+  
+\begin{vdm_al}  
+    static public testRightColorsInRightPlaces : () ==> ()
+    testRightColorsInRightPlaces () ==
+      let b = new Board(['b', 'b', 'b', 'b']),
+        solutionToValue = {
+          ['b', 'b', 'r', 'o'] |-> 2,
+          ['r', 'r', 'r', 'o'] |-> 0,
+          ['b', 'b', 'b', 'b'] |-> 4
+        } in
+        AssertTrue(forall solution in set (dom solutionToValue)
+          & b.calculateRightColorsInRightPlaces(solution) = solutionToValue(solution));
+\end{vdm_al}  
+  
+O teste ``testRightColorsInWrongPlaces'' funciona de forma semelhante
+ao teste ``testRightColorsInRightPlaces'', mas testa o funcionamento
+do operador ``calculateRightColorsInWrongPlaces'', em vez de testar o
+operador ``calculateRightColorsInRightPlaces''.
+
+\begin{vdm_al}
+    static public testRightColorsInWrongPlaces : () ==> ()
+    testRightColorsInWrongPlaces () ==
+      let b = new Board(['b', 'r', 'y', 'o']),
+        solutionToValue = {
+          ['r', 'm', 'm', 'm'] |-> 1,
+          ['m', 'r', 'm', 'm'] |-> 0,
+          ['m', 'r', 'm', 'y'] |-> 1,
+          ['y', 'm', 'm', 'y'] |-> 1
+        } in
+        AssertTrue(forall solution in set (dom solutionToValue)
+          & b.calculateRightColorsInWrongPlaces(solution) = solutionToValue(solution));
+\end{vdm_al}  
+ 
+O teste ``testReadSimpleBoardFromFile'' tenta escrever e ler um
+tabuleiro básico (sem nenhuma jogada) e verifica se os tabuleiros
+lidos do disco são iguais aos tabuleiros originais.
+
+\begin{vdm_al} 
+    static public testReadSimpleBoardFromFile : () ==> ()
+    testReadSimpleBoardFromFile () == (
+      writeAndReadBoardFromFile("simpleBoard1.txt", new Board("bbbb"));
+      writeAndReadBoardFromFile("simpleBoard2.txt", new Board("rbmg"));
+    );
+\end{vdm_al}
+
+O teste ``testReadMaxAttemptsChangedBoardFromFile'' é semelhante ao
+teste ``testReadSimpleBoardFromFile'', mas desta os tabuleiros pode
+ter o valor da variável ``maxAttempts'' diferente do valor padrão.
+
+\begin{vdm_al}  
+    static public testReadMaxAttemptsChangedBoardFromFile : () ==> ()
+    testReadMaxAttemptsChangedBoardFromFile () == (
+      writeAndReadBoardFromFile("maxAttemptsBoard1.txt", new Board("bbbb", 8));
+      writeAndReadBoardFromFile("maxAttemptsBoard2.txt", new Board("bbbb", 10));
+      writeAndReadBoardFromFile("maxAttemptsBoard3.txt", new Board("bbbb", 12));
+    );
+\end{vdm_al}
+
+O teste ``testReadNormalBoardFromFile'' testa a escrita e leitura de
+tabuleiros para o disco, mas desta vez os tabuleiros já têm jogadas
+feitas, havendo inclusive, um tabuleiro já terminado devido ao número
+máximo de tentativas já terem sido realizadas (o tabuleiro ``board3'')
+e outro onde a solução é encontrada (o tabuleiro ``board1'').
+
+\begin{vdm_al}  
+    static public testReadNormalBoardFromFile : () ==> ()
+    testReadNormalBoardFromFile () == (
+      dcl board1 : Board := new Board("bbbb"),
+        board2 : Board := new Board("bryo"),
+        board3 : Board := new Board("rgmb", 8);
+  
+        board1.makeAPlay("rgrg");
+        board1.makeAPlay("gggg");
+        board1.makeAPlay("bbbb");
+  
+        board2.makeAPlay("mmmm");
+        board2.makeAPlay("bgbg");
+        board2.makeAPlay("ryry");
+  
+        -- Perform the max ammount of plays (in this case 8)
+        board3.makeAPlay("ogrm");
+        board3.makeAPlay("gbry");
+        board3.makeAPlay("romo");
+        board3.makeAPlay("yrry");
+        board3.makeAPlay("roby");
+        board3.makeAPlay("gmbr");
+        board3.makeAPlay("gomy");
+        board3.makeAPlay("ybyr");
+  
+        writeAndReadBoardFromFile("normalBoard1.txt", board1);
+        writeAndReadBoardFromFile("normalBoard2.txt", board2);
+        writeAndReadBoardFromFile("normalBoard3.txt", board3);
+      );
+\end{vdm_al}  
+ 
+O operador privado ``writeAndReadBoardFromFile'' é responsável por
+escrever um objeto do tipo ``Board'' para um ficheiro e depois ler-lo
+de volta, confirmando que os dois objetos são indênticos.
+
+Este operador recebe o nome do ficheiro a gravar no disco e o objeto
+do tipo ``Board'' a gravar.
+
+\begin{vdm_al} 
+    static private writeAndReadBoardFromFile : String * Board ==> ()
+    writeAndReadBoardFromFile (filename, board) == (
+      dcl io : IO := new IO(),
+      writeSuccess : bool := io.fecho(filename, board.dumpBoardToString(), <start>);
+  
+      -- Check if the file was correctly created
+      AssertTrue(writeSuccess = true);
+  
+      let mk_(readSuccess, boardFromDisk) = io.freadval[Board](filename) in (
+        -- Check if the file was correctly read
+        AssertTrue(readSuccess = true);
+  
+        -- Perform consistency checks
+        AssertTrue(board.getSolution() = boardFromDisk.getSolution());
+        AssertTrue(board.getMaxAttempts() = boardFromDisk.getMaxAttempts());
+  
+        AssertTrue(len board.getAttempts() = len boardFromDisk.getAttempts());
+  
+        -- Since the attempts are a 'seq', check if the order of its elements
+        -- stays the same
+        AssertTrue(forall i in set inds board.getAttempts() &
+          board.getAttempts()(i) = boardFromDisk.getAttempts()(i));
+      )
+    );
+\end{vdm_al}
+
+Termina assim a bateria de testes sobre a classe ``Board''.
+  
+\begin{vdm_al}
+  end BoardTest
+\end{vdm_al}
+
+\subsection{ChampionshipTests}
+
+Tal como aconteceu com a classe ``BoardTest'', também a classe
+``ChampionshipTests'' define um tipo auxiliar ``String''.
+
+\begin{vdm_al}
+  class ChampionshipTest
+    types
+      public String = Utilities`String;
+\end{vdm_al}
+
+Também como já aconteceu com a classe ``BoardTest'', também esta
+classe define um operador ``AssertTrue'' que permite testar qualquer
+expressão que retorne um valor do tipo ``bool'' e verificar se esta
+devolve ``true''.
+
+\begin{vdm_al}  
+    operations
+    static public AssertTrue : bool ==> ()
+      AssertTrue(a) == return
+    pre a;
+\end{vdm_al}  
+
+O operador ``runAllTests'' executa todos os testes definidos nesta
+classe e serve de ponto de entrada para a mesma.
+
+\begin{vdm_al}  
+    static public runAllTests : () ==> ()
+    runAllTests () == (
+      testNewChampionship1();
+      testNewChampionship2();
+      testAddGame1();
+      testAddGame2();
+      testCalculateScores();
+      testReadSimpleChampionshipFromFile();
+      testReadChampionshipWithGamesFromFile();
+      testReadNormalChampionshipFromFile();
+    );
+\end{vdm_al}  
+
+O teste ``testNewChampionship1'' testa a criação do campeonato mais
+simples possível: só com duas equipas e sem nenhum jogo entre elas.
+
+\begin{vdm_al}  
+    static public testNewChampionship1 : () ==> ()
+    testNewChampionship1() ==
+      ( dcl c : Championship := new Championship({"Spartans","Romans"});
+  
+        AssertTrue(card c.getTeams() = 2);
+        AssertTrue(c.getTeams() = {"Spartans", "Romans"});
+        AssertTrue(c.getScore("Spartans") = 0);
+        AssertTrue(c.getScore("Romans") = 0);
+  
+      );
+\end{vdm_al}  
+
+O teste ``testNewChampionship2'' permite testar se o operador
+``addTeams'' está de fato a adicionar equipas à variável ``teams'' da
+classe ``Championship''.
+
+\begin{vdm_al}  
+    static public testNewChampionship2 : () ==> ()
+    testNewChampionship2() ==
+      ( dcl c : Championship := new Championship({"Spartans", "Romans"});
+  
+        AssertTrue(card c.getTeams() = 2);
+        AssertTrue(c.getTeams() = {"Spartans", "Romans"});
+        c.addTeams({"Gauls", "Greeks"});
+        AssertTrue(card c.getTeams() = 4);
+        AssertTrue({"Gauls", "Greeks"} subset c.getTeams());
+  
+      );
+\end{vdm_al}  
+
+O teste ``testAddGame1'' permite testar se é possível adicionar jogos
+entre duas equipas através do operador ``addQuickGame'', que tem a
+finalidade de criar jogos cujas as soluções para os seus tabuleiros
+seja gerada aleatoriamene. Este jogo deverá então pertencer ao
+campeonato.
+
+Este teste verifica também se é possível obter os tabuleiros gerados
+pela classe ``Game'' quando esta é criada.
+
+\begin{vdm_al}  
+    static public testAddGame1 : () ==> ()
+    testAddGame1() ==
+      ( dcl c : Championship := new Championship({"Spartans", "Romans"}),
+        g  : Game  := c.addQuickGame("Spartans","Romans"),
+        b1 : Board := g.getBoardPlayedByTeam("Spartans"),
+        b2 : Board := g.getBoardPlayedByTeam("Romans");
+  
+        AssertTrue((g.getParticipantTeams() subset c.getTeams()));
+        AssertTrue(g in set c.getGames());
+  
+        AssertTrue(b1.isSolutionCracked() = false);
+        AssertTrue(b2.isSolutionCracked() = false);
+  
+      );
+\end{vdm_al}
+
+O teste ``testAddGame2'' testa se é possível adicionar jogos a um
+campeonato através do operador ``addGame''.
+
+Ao contrário do operador ``addQuickGame'', ao utilizar o operador
+``addGame'', pode-se especificar qual a solução de cada um dos
+tabuleiros criados.
+
+Este teste também testa se o operador ``getScore'' da classe ``Championship''.
+  
+\begin{vdm_al}  
+    static public testAddGame2 : () ==> ()
+    testAddGame2() ==
+      ( dcl solSpartans : seq1 of Color`Color := ['b', 'b', 'r', 'b'],
+        solRomans : seq1 of Color`Color := ['r', 'r', 'b', 'r'],
+        c : Championship := new Championship({"Spartans", "Romans"}),
+        g : Game := c.addGame({"Spartans" |-> solSpartans, "Romans" |-> solRomans}),
+        b1 : Board := g.getBoardPlayedByTeam("Spartans"),
+        b2 : Board := g.getBoardPlayedByTeam("Romans");
+  
+        AssertTrue((g.getParticipantTeams() subset c.getTeams()));
+  
+        AssertTrue(b1.isSolutionCracked() = false);
+        AssertTrue(b2.isSolutionCracked() = false);
+  
+        AssertTrue(b1.getSolution() = solRomans);
+        AssertTrue(b2.getSolution() = solSpartans);
+  
+        AssertTrue(c.getScore("Spartans") = 0);
+        AssertTrue(c.getScore("Romans") = 0);
+  
+      );
+\end{vdm_al}  
+
+O teste ``testCalculateScores'' testa se é possível calcular os pontos
+de cada equipa de um campeonato através do operador ``getScore'' e se
+é possível obter a pontuação da equipa que está à frente através do
+operador ``getNumberOfTriesWinner''.
+
+\begin{vdm_al}  
+    static public testCalculateScores : () ==> ()
+    testCalculateScores () == (
+        dcl c1 : Championship := new Championship({"lorem", "ipsum", "foo", "bar"}),
+        g1 : Game := c1.addGame({"lorem" |-> "bbbb", "ipsum" |-> "rrrr"}),
+        g2 : Game := c1.addGame({"foo" |-> "rgrg", "bar" |-> "mymy"});
+  
+        g1.getBoardPlayedByTeam("lorem").makeAPlay("rggg");
+  
+        -- "ipsum" cracks the code in 5 tries so "lorem" gains 5 points
+        g1.getBoardPlayedByTeam("ipsum").makeAPlay("bbrg");
+        g1.getBoardPlayedByTeam("ipsum").makeAPlay("mrob");
+        g1.getBoardPlayedByTeam("ipsum").makeAPlay("bobm");
+        g1.getBoardPlayedByTeam("ipsum").makeAPlay("bgbm");
+        g1.getBoardPlayedByTeam("ipsum").makeAPlay("bbbb");
+  
+        -- "foo" can't crack this board, so "bar" gains 13 points
+        g2.getBoardPlayedByTeam("foo").makeAPlay("ggym");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("yomo");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("ggbb");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("royy");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("mgby");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("gror");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("grgr");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("grrr");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("grgr");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("ggrr");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("grgg");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("yyyy");
+  
+        g2.getBoardPlayedByTeam("bar").makeAPlay("mbrb");
+        g2.getBoardPlayedByTeam("bar").makeAPlay("bybb");
+        g2.getBoardPlayedByTeam("bar").makeAPlay("ggry");
+        g2.getBoardPlayedByTeam("bar").makeAPlay("rmom");
+  
+        AssertTrue(c1.getScore("lorem") = 5);
+        AssertTrue(c1.getScore("ipsum") = 0);
+        AssertTrue(c1.getScore("foo") = 0);
+        AssertTrue(c1.getScore("bar") = 13);
+  
+        AssertTrue(c1.getNumberOfTriesWinner() = 13);
+      );
+\end{vdm_al}  
+
+O teste ``testReadSimpleChampionshipFromFile'' testa se é possível
+escrever para um ficheiro um campeonato sem jogos e de seguida lê-lo e
+obter campeonatos idênticos.
+
+\begin{vdm_al}  
+    static public testReadSimpleChampionshipFromFile : () ==> ()
+    testReadSimpleChampionshipFromFile () == (
+      writeAndReadChampionshipFromFile("simpleChampionship1.txt",
+        new Championship({"lorem", "ipsum"}));
+      writeAndReadChampionshipFromFile("simpleChampionship2.txt",
+        new Championship({"lorem", "ipsum", "foo", "bar"}));
+    );
+\end{vdm_al}
+
+O teste ``testReadChampionshipWithGamesFromFile'' testa se é possível
+escrever para um ficheiro um campeonato onde já tenham sido criados
+alguns jogos e se ao ler essa informação do ficheiro, se os
+campeonatos são idênticos.
+
+\begin{vdm_al}  
+    static public testReadChampionshipWithGamesFromFile : () ==> ()
+    testReadChampionshipWithGamesFromFile () == (
+      dcl c1 : Championship := new Championship({"lorem", "ipsum"}),
+        c2 : Championship := new Championship({"lorem", "ipsum", "foo", "bar"}),
+        g1 : Game := c1.addGame({"lorem" |-> "bbbb", "ipsum" |-> "rrrr"}),
+        g2 : Game := c2.addGame({"lorem" |-> "bbbb", "ipsum" |-> "rrrr"}),
+        g3 : Game := c2.addGame({"foo" |-> "rgrg", "ipsum" |-> "mymy"});
+  
+        writeAndReadChampionshipFromFile("championshipWithGames1.txt", c1);
+        writeAndReadChampionshipFromFile("championshipWithGames2.txt", c2);
+      );
+\end{vdm_al}
+
+O teste ``testReadNormalChampionshipFromFile'' testa se é possível
+escrever para um ficheiro um campeonato com jogos, tendo alguns desses
+jogos já terminado e se ao ler esse campeonato do ficheiro, a
+informação toda é preservada.
+
+\begin{vdm_al}  
+    static public testReadNormalChampionshipFromFile : () ==> ()
+    testReadNormalChampionshipFromFile () == (
+      dcl c1 : Championship := new Championship({"lorem", "ipsum", "foo", "bar"}),
+        g1 : Game := c1.addGame({"lorem" |-> "bbbb", "ipsum" |-> "rrrr"}),
+        g2 : Game := c1.addGame({"foo" |-> "rgrg", "bar" |-> "mymy"});
+  
+        g1.getBoardPlayedByTeam("lorem").makeAPlay("rrrr");
+  
+        g1.getBoardPlayedByTeam("ipsum").makeAPlay("bbrg");
+        g1.getBoardPlayedByTeam("ipsum").makeAPlay("mrob");
+        g1.getBoardPlayedByTeam("ipsum").makeAPlay("bobm");
+        g1.getBoardPlayedByTeam("ipsum").makeAPlay("bgbm");
+        g1.getBoardPlayedByTeam("ipsum").makeAPlay("bbbb");
+  
+        g2.getBoardPlayedByTeam("foo").makeAPlay("ggym");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("yomo");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("ggbb");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("royy");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("mgby");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("gror");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("grgr");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("grrr");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("grgr");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("ggrr");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("grgg");
+        g2.getBoardPlayedByTeam("foo").makeAPlay("yyyy");
+  
+        g2.getBoardPlayedByTeam("bar").makeAPlay("mbrb");
+        g2.getBoardPlayedByTeam("bar").makeAPlay("bybb");
+        g2.getBoardPlayedByTeam("bar").makeAPlay("ggry");
+        g2.getBoardPlayedByTeam("bar").makeAPlay("rmom");
+  
+        writeAndReadChampionshipFromFile("normalChampionship1.txt", c1);
+      );
+\end{vdm_al}
+
+O operador privado ``writeAndReadChampionshipFromFile'' escreve um
+campeonato que é-lhe passado pelo argumento ``championship'' para um
+ficheiro cujo nome é-lhe passado através do argumento ``filename''.
+
+Após escrever o campeonato num ficheiro, este é lido e é verificado se
+tem os jogos todos iguais e se os seus tabuleiros estão no mesmo
+estado que o campeonato original
+
+\begin{vdm_al}  
+    static private writeAndReadChampionshipFromFile : String * Championship ==> ()
+    writeAndReadChampionshipFromFile (filename, championship) == (
+      dcl io : IO := new IO(),
+      writeSuccess : bool := io.fecho(filename, championship.dumpChampionshipToString(), <start>);
+  
+      -- Check if the file was correctly created
+      AssertTrue(writeSuccess = true);
+  
+      let mk_(readSuccess, championshipFromDisk) = io.freadval[Championship](filename) in (
+        -- Check if the file was correctly read
+        AssertTrue(readSuccess = true);
+  
+        -- Perform consistency checks
+        AssertTrue(championship.getTeams() = championshipFromDisk.getTeams());
+  
+        AssertTrue(card championship.getGames() = card championshipFromDisk.getGames());
+        AssertTrue(forall i in set championship.getGames() &
+          exists1 j in set championshipFromDisk.getGames() &
+          isSameGame(i, j));
+        )
+      );
+\end{vdm_al}  
+
+A função ``isSameGame'' indica se dois objetos do tipo ``Game'' são
+idênticos.
+
+Para que dois objetos do tipo ``Game'' sejam idênticos, estes têm que
+ter as mesmas equipas a participar neles e os tabuleiros onde estão a
+jogar têm que ser idênticos.
+
+\begin{vdm_al}  
+    functions
+
+    static private isSameGame : Game * Game -> bool
+    isSameGame (game1, game2) ==
+      -- Both games must have the same teams playing
+      game1.getParticipantTeams() = game2.getParticipantTeams() and
+  
+      -- The board played by each team must be the same
+      forall team in set game1.getParticipantTeams() &
+        isSameBoard(game1.getBoardPlayedByTeam(team),
+          game2.getBoardPlayedByTeam(team));
+\end{vdm_al}  
+
+A função ``isSameBoard'' indica se dois objetos do tipo ``Board'' são
+idênticos.
+
+Dois objetos do tipo ``Board'' são idênticos se ambos têm a mesma
+solução, o mesmo número máximo de tentativas e se as tentativas feitas
+são iguais.
+
+\begin{vdm_al}  
+    static private isSameBoard : Board * Board -> bool
+    isSameBoard (board1, board2) ==
+      -- Both boards must have he same solution
+      board1.getSolution() = board2.getSolution() and
+  
+      -- Both boards must have the same number of maximum attempts
+      board1.getMaxAttempts() = board2.getMaxAttempts() and
+  
+      -- Both boards must have the same number of attempts
+      len board1.getAttempts() = len board2.getAttempts() and
+  
+      -- Those attempts must be the same in both boards
+      forall i in set inds board1.getAttempts() &
+        board1.getAttempts()(i) = board2.getAttempts()(i);
+\end{vdm_al}
+
+Termina assim a bateria de testes sobre a classe ``Championship.
+
+\begin{vdm_al}  
+  end ChampionshipTest
+\end{vdm_al}
+  
+\subsection{Tests}
+
+A classe ``Tests'' apenas contêm o método ``runAllTests'' que corre
+todos os testes da classe ``BoardTest'' e ``ChampionshipTest''.
+
+Esse método serve de ponto de entrada para efetuar a cobertura do
+código.
+
+\begin{vdm_al}
+  class Tests
+    operations
+  
+    public runAllTests : () ==> ()
+    runAllTests () == (
+      BoardTest`runAllTests();
+      ChampionshipTest`runAllTests();
+  
+    );
+  
+  end Tests
+\end{vdm_al}
+
+Para executar todos os testes, deve ser usada a seguinte expressão no
+interpretador do VDM:
+
+\begin{verbatim}
+  print new Tests().runAllTests()
+\end{verbatim}
+
+
+

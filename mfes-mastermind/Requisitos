@@ -1,0 +1,40 @@
+
+
+
+
+
+
+
+
+
+1. Num jogo, com duas equipas, existem sempre duas partidas, em que cada equipa
+	tenta quebrar o código definido pela adversária.
+2. Dado um jogo, com duas equipas, deve ser possível a cada equipa definir o
+	código a ser quebrado pela equipa adversária.
+3. Em cada partida, cada equipa deve poder realizar uma tentativa de encontrar
+	a solução do tabuleiro, no seu respectivo turno.
+4. Dada uma tentativa, num determinado tabuleiro, deve ser possível saber
+	quantas peças estão com a cor certa no lugar certo.
+5. Dada uma tentativa, num determinado tabuleiro, deve ser possível saber
+	quantas peças estão com a cor certa no lugar errado.
+6. Após uma tentativa, deve ser possível verificar se a solução foi encontrada.
+7. Deve ser possível calcular o número de tentativas que foram necessárias para
+	adivinhar a solução.
+8. Deve ser possível criar um campeonato, onde participem várias equipas.
+9. Deve ser possível adicionar equipas ao campeonato.
+ 10. As equipas que participam num determinado jogo de um determinado
+	campeonato, têm que estar inscritas no campeonato.
+11. Dada uma equipa, deve ser possível obter o número de tentativas que foram
+	necessárias para adivinhar a solução, em todos os jogos em que a equipa
+	participou, no campeonato.
+12. Um campeonato tem que ter no minimo 2 equipas.
+
+
+
+
+1. Em cada tentativa, é utilizada uma sequência de 4 peças coloridas, podendo
+	as cores serem repetidas. Exemplo: Azul, Azul, Amarelo, Laranja.
+2. Após a solução ter sido encontrada, não é possível fazer mais nenhuma
+	jogada no tabuleiro corrente.
+3. Só é possível efectuar uma tentativa, caso o estado de jogo assim o permita.
+4. 

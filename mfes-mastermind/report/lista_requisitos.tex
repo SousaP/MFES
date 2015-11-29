@@ -1,0 +1,70 @@
+
+Inicialmente, foi-nos indicado no enunciado deste projeto que o
+sistema deveria cumprir com estes 3 requisitos:
+
+\begin{enumerate}
+\item Perguntar ao sistema qual o número de peças com a cor certa e no
+  sítio certo e qual o número de peças com a cor certa mas no sítio
+  errado de cada tentativa;
+\item Calcular o número de tentativas que o \\emph{codebreaker} precisou para
+  adivinhar o código;
+\item Guardar a informação sobre um campeonato com várias equipas e
+  calcular a soma do número de tentativas que a equipa vencedora precisou
+\end{enumerate}
+
+A partir desses três requisitos pedidos e da descrição das regras do
+Mastermind efetuada anteriormente, criámos um conjunto de requisitos
+que o sistema tinha que implementar para funcionar corretamente:
+
+\begin{enumerate}
+\item Num jogo, com duas equipas, existem sempre duas partidas, em que
+  cada equipa tenta quebrar o código definido pela adversária;
+\item Dado um jogo, com duas equipas, deve ser possível a cada equipa
+  definir o código a ser quebrado pela equipa adversária;
+\item Em cada partida, cada equipa deve poder realizar uma tentativa
+  de encontrar a solução do tabuleiro;
+\item Dada uma tentativa, num determinado tabuleiro, deve ser possível
+  saber quantas peças estão com a cor certa no lugar certo;
+\item Dada uma tentativa, num determinado tabuleiro, deve ser possível
+  saber quantas peças estão com a cor certa no lugar errado;
+\item Após uma tentativa, deve ser possível verificar se a solução foi
+  encontrada;
+\item Deve ser possível calcular o número de tentativas que foram
+  necessárias para adivinhar a solução;
+\item Deve ser possível criar um campeonato, onde participem várias
+  equipas;
+\item Deve ser possível adicionar equipas ao campeonato;
+\item As equipas que participam num determinado jogo de um determinado
+  campeonato, têm que estar inscritas no campeonato;
+\item Dada uma equipa, deve ser possível obter a sua pontuação num
+  dado campeonato. Esse valor depende do número de tentativas que as
+  equipas adversárias gastaram para adivinhar a solução;
+\item Um campeonato tem que ter no minimo 2 equipas;
+\item Deve ser possível gravar um campeonato para um ficheiro e
+  restaurá-lo mais tarde;
+\item Deve ser possível adicionar jogos aos campeonatos.
+\end{enumerate}
+
+\subsection{Restrições necessárias para o funcionamento correto do sistema}
+
+Foram também identificadas um conjunto de restrições que o sistema
+tinha que cumprir para funcionar corretamente:
+
+\begin{enumerate}
+\item Após a solução de um tabuleiro ter sido encontrada, não é possível fazer mais
+  nenhuma jogada nele;
+\item Só é possível efetuar uma tentativa se o jogo ainda não tiver terminado;
+\item As cores usadas nos códigos têm que pertencer a um conjunto de 6
+  cores definidos previamente;
+\item Cada tabuleiro só aceita tentativas e soluções com 4 elementos;
+\item O número máximo de tentativas de cada tabuleiro é 8, 10, ou 12;
+\item O número de peças com a cor certa no sítio certo não pode ser
+  superior ao tamanho da solução do tabuleiro;
+\item O número de peças com a cor certa, mas no sítio errado não pode
+  ser superior ao tamanho da solução do tabuleiro;
+\item O número de equipas num campeonato tem de ser um número par
+  maior ou igual a 2;
+\item As equipas que participam nos jogos de um campeonato têm que
+  estar inscritas nesse campeonato;
+\end{enumerate}
+

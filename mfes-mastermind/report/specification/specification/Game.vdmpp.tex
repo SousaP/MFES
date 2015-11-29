@@ -1,0 +1,98 @@
+\begin{vdm_al}
+class Game
+
+ types
+  public String = Utilities`String;
+
+ instance variables
+  private gameInstances : map String to Board;
+  inv card (dom gameInstances) = 2;
+
+ operations
+
+  public Game : map String to seq1 of Color`Color * Championship ==> Game
+  Game (teamsSolutions, championship) == (
+
+   let {team1, team2} = dom teamsSolutions in
+    gameInstances := {team1 |-> new Board(teamsSolutions(team2)),
+     team2 |-> new Board(teamsSolutions(team1))};
+
+   )
+  pre card (dom teamsSolutions) = 2 and
+   forall team in set dom teamsSolutions &
+    team in set championship.getTeams() and
+   forall solution in set rng teamsSolutions &
+    len solution = Board`attemptLength
+
+  post forall team in set (dom gameInstances) &
+   let opponentTeam = dom teamsSolutions \ {team} in
+    {gameInstances(team).getSolution()} =
+    rng (opponentTeam <: teamsSolutions);
+
+
+  -- Constructor needed to recreate a game from the information of a file
+  public Game : map String to Board ==> Game
+  Game (storedGameInstances) ==
+   gameInstances := storedGameInstances
+  pre card (dom storedGameInstances) = 2
+  post gameInstances = storedGameInstances;
+
+
+
+  public getParticipantTeams : () ==> set of String
+  getParticipantTeams () == return dom gameInstances
+  post RESULT = dom gameInstances;
+
+
+  public getBoardPlayedByTeam : String ==> Board
+  getBoardPlayedByTeam (team) == return gameInstances(team)
+  post RESULT = gameInstances(team);
+
+
+  public getBoardPlayedByOpponent : String ==> Board
+  getBoardPlayedByOpponent (team) ==
+   let opponent in set (dom gameInstances)\{team}
+   in
+   return gameInstances(opponent)
+  pre team in set (dom gameInstances)
+
+  post RESULT in set rng gameInstances
+   and {RESULT} = rng ({team} <-: gameInstances);
+
+
+  -- Operators needed to write a Game to a file
+  private dumpGameInstanceToString : () ==> String
+  dumpGameInstanceToString () ==
+   let {team1, team2} = dom gameInstances in
+   return "{\"" ^ team1 ^ "\" |-> " ^ gameInstances(team1).dumpBoardToString() ^ ", "
+    ^ "\"" ^ team2 ^ "\" |-> " ^ gameInstances(team2).dumpBoardToString() ^ "}"
+  pre card (dom gameInstances) = 2;
+
+  public dumpGameToString : () ==> String
+  dumpGameToString () == return "new Game(" ^ dumpGameInstanceToString() ^ ")";
+
+end Game
+\end{vdm_al}
+\bigskip
+\begin{longtable}{|l|r|r|}
+\hline
+Function or operation & Coverage & Calls \\
+\hline
+\hline
+Game & 100.0\% & 23 \\
+\hline
+dumpGameInstanceToString & 100.0\% & 23 \\
+\hline
+dumpGameToString & 100.0\% & 23 \\
+\hline
+getBoardPlayedByOpponent & 100.0\% & 172 \\
+\hline
+getBoardPlayedByTeam & 100.0\% & 358 \\
+\hline
+getParticipantTeams & 100.0\% & 490 \\
+\hline
+\hline
+Game.vdmpp & 100.0\% & 1089 \\
+\hline
+\end{longtable}
+

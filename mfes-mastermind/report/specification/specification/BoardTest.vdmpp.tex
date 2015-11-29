@@ -1,0 +1,201 @@
+\begin{vdm_al}
+class BoardTest
+ types
+  public String = Utilities`String;
+
+ operations
+ static public AssertTrue : bool ==> ()
+  AssertTrue(a) == return
+    pre a;
+
+
+ static public runAllTests : () ==> ()
+  runAllTests () == (
+   testGoodGame1();
+   testGoodGame2();
+   testGoodGame3();
+   testGoodGame4();
+   testGoodGame5();
+   testRightColorsInRightPlaces();
+   testRightColorsInWrongPlaces();
+   testReadSimpleBoardFromFile();
+   testReadMaxAttemptsChangedBoardFromFile();
+   testReadNormalBoardFromFile();
+  );
+
+
+ static public testGoodGame1 : () ==> ()
+ testGoodGame1 () ==
+ ( dcl b : Board := new Board(['b', 'b', 'b', 'b']);
+  b.makeAPlay(['b', 'b', 'b', 'b']);
+  AssertTrue(b.isSolutionCracked());
+ );
+
+
+ static public testGoodGame2 : () ==> ()
+ testGoodGame2 () ==
+ ( dcl b : Board := new Board(['b', 'b', 'b', 'b']);
+  AssertTrue(b.numberOfTriesRemaining() = 12);
+  b.makeAPlay(['b', 'b', 'b', 'b']);
+  AssertTrue(b.numberOfTriesRemaining() = 11);
+ );
+
+
+ static public testGoodGame3 : () ==> ()
+ testGoodGame3 () ==
+ ( dcl b : Board := new Board(['b', 'r', 'y', 'o']);
+  AssertTrue(b.numberOfTriesMade() = 0);
+  b.makeAPlay(['b', 'b', 'b', 'b']);
+  AssertTrue(b.numberOfTriesMade() = 1);
+ );
+
+
+ static public testGoodGame4 : () ==> ()
+ testGoodGame4 () ==
+ ( dcl b : Board := new Board(['b', 'r', 'y', 'o'], 10);
+  AssertTrue(b.numberOfTriesRemaining() = 10);
+  b.makeAPlay(['b', 'b', 'b', 'b']);
+  AssertTrue(b.numberOfTriesRemaining() = 9);
+
+ );
+
+
+ static public testGoodGame5 : () ==> ()
+ testGoodGame5 () ==
+  let b = new Board()
+   in
+   AssertTrue (len b.getSolution() = Board`attemptLength);
+
+
+ static public testRightColorsInRightPlaces : () ==> ()
+ testRightColorsInRightPlaces () ==
+  let b = new Board(['b', 'b', 'b', 'b']),
+   solutionToValue = {
+    ['b', 'b', 'r', 'o'] |-> 2,
+    ['r', 'r', 'r', 'o'] |-> 0,
+    ['b', 'b', 'b', 'b'] |-> 4
+   } in
+   AssertTrue(forall solution in set (dom solutionToValue)
+    & b.calculateRightColorsInRightPlaces(solution) = solutionToValue(solution));
+
+
+ static public testRightColorsInWrongPlaces : () ==> ()
+ testRightColorsInWrongPlaces () ==
+  let b = new Board(['b', 'r', 'y', 'o']),
+   solutionToValue = {
+    ['r', 'm', 'm', 'm'] |-> 1,
+    ['m', 'r', 'm', 'm'] |-> 0,
+    ['m', 'r', 'm', 'y'] |-> 1,
+    ['y', 'm', 'm', 'y'] |-> 1
+   } in
+   AssertTrue(forall solution in set (dom solutionToValue)
+    & b.calculateRightColorsInWrongPlaces(solution) = solutionToValue(solution));
+
+
+ static public testReadSimpleBoardFromFile : () ==> ()
+ testReadSimpleBoardFromFile () == (
+  writeAndReadBoardFromFile("simpleBoard1.txt", new Board("bbbb"));
+  writeAndReadBoardFromFile("simpleBoard2.txt", new Board("rbmg"));
+ );
+
+ static public testReadMaxAttemptsChangedBoardFromFile : () ==> ()
+ testReadMaxAttemptsChangedBoardFromFile () == (
+  writeAndReadBoardFromFile("maxAttemptsBoard1.txt", new Board("bbbb", 8));
+  writeAndReadBoardFromFile("maxAttemptsBoard2.txt", new Board("bbbb", 10));
+  writeAndReadBoardFromFile("maxAttemptsBoard3.txt", new Board("bbbb", 12));
+ );
+
+ static public testReadNormalBoardFromFile : () ==> ()
+ testReadNormalBoardFromFile () == (
+  dcl board1 : Board := new Board("bbbb"),
+   board2 : Board := new Board("bryo"),
+   board3 : Board := new Board("rgmb", 8);
+
+   board1.makeAPlay("rgrg");
+   board1.makeAPlay("gggg");
+   board1.makeAPlay("bbbb");
+
+   board2.makeAPlay("mmmm");
+   board2.makeAPlay("bgbg");
+   board2.makeAPlay("ryry");
+
+   -- Perform the max ammount of plays (in this case 8)
+   board3.makeAPlay("ogrm");
+   board3.makeAPlay("gbry");
+   board3.makeAPlay("romo");
+   board3.makeAPlay("yrry");
+   board3.makeAPlay("roby");
+   board3.makeAPlay("gmbr");
+   board3.makeAPlay("gomy");
+   board3.makeAPlay("ybyr");
+
+   writeAndReadBoardFromFile("normalBoard1.txt", board1);
+   writeAndReadBoardFromFile("normalBoard2.txt", board2);
+   writeAndReadBoardFromFile("normalBoard3.txt", board3);
+  );
+
+
+ static private writeAndReadBoardFromFile : String * Board ==> ()
+ writeAndReadBoardFromFile (filename, board) == (
+  dcl io : IO := new IO(),
+  writeSuccess : bool := io.fecho(filename, board.dumpBoardToString(), <start>);
+
+  -- Check if the file was correctly created
+  AssertTrue(writeSuccess = true);
+
+  let mk_(readSuccess, boardFromDisk) = io.freadval[Board](filename) in (
+   -- Check if the file was correctly read
+   AssertTrue(readSuccess = true);
+
+   -- Perform consistency checks
+   AssertTrue(board.getSolution() = boardFromDisk.getSolution());
+   AssertTrue(board.getMaxAttempts() = boardFromDisk.getMaxAttempts());
+
+   AssertTrue(len board.getAttempts() = len boardFromDisk.getAttempts());
+
+   -- Since the attempts are a 'seq', check if the order of its elements
+   -- stays the same
+   AssertTrue(forall i in set inds board.getAttempts() &
+    board.getAttempts()(i) = boardFromDisk.getAttempts()(i));
+  )
+ );
+
+end BoardTest
+\end{vdm_al}
+\bigskip
+\begin{longtable}{|l|r|r|}
+\hline
+Function or operation & Coverage & Calls \\
+\hline
+\hline
+AssertTrue & 100.0\% & 348 \\
+\hline
+runAllTests & 100.0\% & 6 \\
+\hline
+testGoodGame1 & 100.0\% & 6 \\
+\hline
+testGoodGame2 & 100.0\% & 6 \\
+\hline
+testGoodGame3 & 100.0\% & 6 \\
+\hline
+testGoodGame4 & 100.0\% & 6 \\
+\hline
+testGoodGame5 & 100.0\% & 6 \\
+\hline
+testReadMaxAttemptsChangedBoardFromFile & 100.0\% & 6 \\
+\hline
+testReadNormalBoardFromFile & 100.0\% & 6 \\
+\hline
+testReadSimpleBoardFromFile & 100.0\% & 6 \\
+\hline
+testRightColorsInRightPlaces & 100.0\% & 6 \\
+\hline
+testRightColorsInWrongPlaces & 100.0\% & 6 \\
+\hline
+writeAndReadBoardFromFile & 100.0\% & 48 \\
+\hline
+\hline
+BoardTest.vdmpp & 100.0\% & 462 \\
+\hline
+\end{longtable}
+

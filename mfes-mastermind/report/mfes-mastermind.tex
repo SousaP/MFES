@@ -1,0 +1,743 @@
+\documentclass{article}
+\usepackage{fullpage}
+\usepackage{overture}
+\usepackage{hyphenat}
+\usepackage[pdftex]{hyperref}
+
+\hypersetup{
+    colorlinks,%
+    citecolor=black,%
+    filecolor=black,%
+    linkcolor=red,%
+    urlcolor=blue
+}
+
+\usepackage{amsmath}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[portuguese]{babel}
+\usepackage{longtable}
+\usepackage{pifont}
+
+\usepackage{float}
+\usepackage{listings}
+\usepackage{makeidx}  % allows for indexgeneration
+\usepackage[center]{caption}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage{fancyvrb}
+\usepackage{pdfpages}
+\usepackage{tabularx}
+\usepackage{array}
+
+
+% Um comando simples para escrever os emails com links do tipo mailto:
+\newcommand{\email}[1]{\href{mailto:#1}{\texttt{#1}}}
+
+% Uma forma mais simples de colocar vistos na matriz de rastreabilidade
+\newcommand{\checkmark}[0]{\ding{51}}
+
+
+\title{\emph{Mastermind}}
+
+\author{João Alves - \email{ei08083@fe.up.pt} \\
+  Rolando Pereira - \email{ei08150@fe.up.pt}}
+
+
+
+
+\begin{document}
+
+%\maketitle
+
+\includepdf{capa.pdf}
+
+
+\tableofcontents
+
+\newpage
+
+
+\section{Introdução}
+\input{introducao.tex}
+\section{Descrição das regras do Mastermind}
+\input{descricao_regras.tex}
+\section{Lista de Requisitos do Sistema de Software}
+\label{sec:lista_requisitos}
+\input{lista_requisitos.tex}
+\section{Especificação, em VDM++, das restrições identificadas.}
+\input{especificao_vdm_das_restricoes.tex}
+
+\section{Leitura e Escrita de Informação para o Disco}
+\label{sec:leitura_escrita}
+\input{leitura_escrita_disco.tex}
+
+
+\section{Classes e scripts de teste}
+\input{classes_scripts_de_teste.tex}
+
+\section{Matriz de rastreabilidade dos testes com os requisitos}
+\input{tabela-rastreabilidade.tex}
+
+\newpage
+\section{Diagrama concetual de classes do sistema}
+\input{diagrama_uml.tex}
+
+\section{Definição completa das classes em VDM++}
+\subsection{Color}
+
+\begin{vdm_al}
+class Color
+  types
+    public Color = char
+    inv color == color in set {'b', 'g', 'r', 'o', 'y', 'm'};
+
+  instance variables
+    static public Colors : set of Color := {'b', 'g', 'r', 'o', 'y', 'm'};
+
+  operations
+    static public getRandomSequence: nat1 ==> seq1 of char
+    getRandomSequence(length) == (
+
+      if(length = 1) then
+        return [randomColor()]
+      else
+        return [randomColor()] ^ getRandomSequence(length-1)
+
+    )
+    post len RESULT = length and
+      forall color in set elems RESULT & color in set Colors;
+
+    static private randomColor: () ==> char
+    randomColor() == (
+
+      ||(return 'b', return 'g', return 'r', return 'o', return 'y', return 'm';
+
+    )
+    post RESULT in set Colors;
+
+end Color
+\end{vdm_al}
+
+\subsection{Utilities}
+
+\begin{vdm_al}
+class Utilities
+  types
+    public String = seq of char;
+
+  functions
+
+    -- Return the minimum of two values
+    static public min : nat * nat -> nat
+      min(a, b) ==
+        if a <= b then a
+        else b;
+
+
+    static public seqToString[@T] : seq of [@T] * (@T -> String) -> String
+    seqToString (sequence, printer) ==
+      if sequence = [] then "[]"
+      else "[" ^ auxSeqToString[@T](sequence, printer) ^ "]";
+
+
+    static private auxSeqToString[@T] : seq1 of [@T] * (@T -> String) -> String
+    auxSeqToString (sequence, printer) ==
+      if len sequence = 1 then
+        printer(hd sequence)
+      else
+        printer(hd sequence) ^ ", " ^ auxSeqToString[@T](tl sequence, printer);
+
+
+    static private setToSeq[@T] : set of [@T] -> seq of [@T]
+    setToSeq (s) ==
+      if card s = 1 then
+        let x in set s in [x]
+      else
+        let x in set s in
+          [x] ^ setToSeq[@T](s\{x})
+    pre s <> {}
+    post forall element in set s & element in set elems RESULT;
+
+
+    static public setToString[@T] : set of @T * (@T -> String) -> String
+    setToString(s, printer) ==
+      if s = {} then "{}"
+      else "{" ^ auxSeqToString[@T](setToSeq[@T](s), printer) ^ "}";
+
+end Utilities
+\end{vdm_al}
+
+\subsection{Board}
+\begin{vdm_al}
+class Board
+  types
+    public String = Utilities`String;
+
+  instance variables
+    private solution : seq1 of Color`Color;
+    inv len solution = attemptLength;
+
+    private attempts : seq of (seq1 of Color`Color) := [];
+    inv forall attempt in set elems attempts & len attempt = attemptLength and
+      len attempts <= maxAttempts;
+
+    private maxAttempts : nat1 := 12;
+    inv maxAttempts in set maxAttemptsAvailable;
+
+
+  operations
+
+
+    public Board : seq1 of Color`Color ==> Board
+    Board (correctPlay) == (
+      solution := correctPlay;
+      attempts := [];
+    )
+    pre len correctPlay = attemptLength
+    post solution = correctPlay and
+      attempts = [];
+
+
+    public Board : () ==> Board
+    Board() == (
+
+      solution := Color`getRandomSequence(attemptLength);
+      attempts := [];
+
+    )
+    post len solution = attemptLength and attempts = [];
+
+
+    public Board : seq1 of Color`Color * nat1 ==> Board
+    Board (correctPlay, maxNumberOfTries) == (
+      solution := correctPlay;
+      maxAttempts := maxNumberOfTries;
+    )
+    pre len correctPlay = attemptLength and
+      maxNumberOfTries in set maxAttemptsAvailable
+    post solution = correctPlay and
+      maxAttempts in set maxAttemptsAvailable;
+
+
+    -- Constructor needed to recreate a board from the information of a file
+    public Board : seq1 of Color`Color * nat1 * seq of (seq1 of Color`Color) ==> Board
+    Board (correctPlay, maxNumberOfTries, savedAttempts) == (
+      solution := correctPlay;
+      maxAttempts := maxNumberOfTries;
+      attempts := savedAttempts;
+    )
+    pre len correctPlay = attemptLength and
+      maxNumberOfTries in set maxAttemptsAvailable and
+      len savedAttempts <= maxNumberOfTries and
+      forall attempt in set elems savedAttempts & len attempt = attemptLength
+
+    post solution = correctPlay and
+      maxAttempts = maxNumberOfTries and
+      -- All elements of "attempts" need to be in the same position of the
+      -- elements of "savedAttempts"
+      numberOfMatchingElems[seq1 of Color`Color](attempts, savedAttempts) = len attempts;
+
+
+
+    public numberOfTriesRemaining : () ==> nat
+      numberOfTriesRemaining () == return maxAttempts - len attempts
+    pre (len attempts) <= maxAttempts
+    post RESULT = maxAttempts - len attempts;
+
+
+    public numberOfTriesMade : () ==> nat
+      numberOfTriesMade () == return len attempts
+    post RESULT = len attempts;
+
+
+    public makeAPlay : seq1 of Color`Color ==> ()
+      makeAPlay (attempt) == attempts := attempts ^ [attempt]
+    pre len attempt = attemptLength and
+      not isGameOver()
+    post attempts = attempts~ ^ [attempt];
+
+
+    -- Return true if the correct code has been found
+    public isSolutionCracked : () ==> bool
+      isSolutionCracked () == return solution in set elems attempts
+    post solution in set elems attempts => RESULT = true;
+
+
+    public isGameOver : () ==> bool
+      isGameOver () == return isSolutionCracked() or len attempts = maxAttempts
+    post RESULT = (isSolutionCracked() or len attempts = maxAttempts);
+
+
+    public calculateRightColorsInRightPlaces : seq of Color`Color ==> nat
+      calculateRightColorsInRightPlaces (attempt) ==
+        return numberOfMatchingElems[Color`Color](attempt, solution)
+    pre len attempt = len solution
+    post RESULT <= len solution;
+
+
+    -- This formula is given in:
+    -- http://mathworld.wolfram.com/Mastermind.html
+    public calculateRightColorsInWrongPlaces : seq of Color`Color ==> nat
+      calculateRightColorsInWrongPlaces (attempt) ==
+      -- Just a temporary variable to hold the value of the sum expression
+      -- (see previous URL)
+        (dcl temp : nat := 0;
+          for all color in set Color`Colors do
+            temp := temp +
+              Utilities`min(
+                countOccurences[Color`Color](solution, color),
+                countOccurences[Color`Color](attempt, color));
+          return temp - calculateRightColorsInRightPlaces(attempt);
+        )
+    pre len attempt = len solution
+    post RESULT <= len solution;
+
+
+    public getSolution : () ==> seq1 of Color`Color
+      getSolution () == return solution
+    post RESULT = solution;
+
+
+    public getAttempts : () ==> seq of (seq1 of Color`Color)
+      getAttempts () == return attempts
+    post RESULT = attempts;
+
+
+    public getMaxAttempts : () ==> nat1
+      getMaxAttempts () == return maxAttempts
+    post RESULT = maxAttempts;
+
+
+
+    -- Operators needed to write a Board to a file
+    public dumpBoardToString : () ==> String
+    dumpBoardToString () ==
+      return "new Board(\"" ^ solution ^ "\", " ^ maxAttemptsToString()
+        ^ ", " ^ attemptsToString() ^")";
+
+    private attemptsToString : () ==> String
+    attemptsToString () ==
+      return Utilities`seqToString[seq1 of Color`Color](attempts,
+        lambda x : String & "\"" ^ x ^ "\"");
+
+    private maxAttemptsToString : () ==> String
+    maxAttemptsToString () ==
+      if maxAttempts = 8 then return "8"
+      elseif maxAttempts = 10 then return "10"
+      else return "12"
+    pre maxAttempts = 8 or maxAttempts = 10 or maxAttempts = 12;
+
+
+  functions
+
+    -- Return the number of elements in the sequence that are a match both
+    -- in value and in position. For example: [1,2,3,4,5] and [4,4,3,5,2]
+    -- only has one element that matches both in value and in position (the
+    -- element 3).
+    private numberOfMatchingElems[@T] : seq of @T * seq of @T -> nat
+      numberOfMatchingElems (firstSeq, secondSeq) ==
+        if firstSeq = [] then
+          0
+        elseif hd firstSeq = hd secondSeq then
+          1 + numberOfMatchingElems[@T](tl firstSeq, tl secondSeq)
+        else
+          numberOfMatchingElems[@T](tl firstSeq, tl secondSeq)
+      pre (len firstSeq) = (len secondSeq)
+      post firstSeq = [] => RESULT = 0;
+
+    -- Return the number of times the element appears in the sequence
+    private countOccurences[@T] : seq of @T * @T -> nat
+      countOccurences (sequence, element) ==
+        if sequence = [] then
+          0
+        elseif hd sequence = element then
+          1 + countOccurences[@T](tl sequence, element)
+        else
+          countOccurences[@T](tl sequence, element)
+      post sequence = [] => RESULT = 0;
+
+
+  values
+    public attemptLength : nat1 = 4;
+    public maxAttemptsAvailable : set of nat1 = {8, 10, 12};
+
+end Board
+\end{vdm_al}
+
+\subsection{Game}
+\begin{vdm_al}
+class Game
+
+  types
+    public String = Utilities`String;
+
+  instance variables
+    private gameInstances : map String to Board;
+    inv card (dom gameInstances) = 2;
+
+  operations
+
+    public Game : map String to seq1 of Color`Color * Championship ==> Game
+    Game (teamsSolutions, championship) == (
+
+      let {team1, team2} = dom teamsSolutions in
+        gameInstances := {team1 |-> new Board(teamsSolutions(team2)),
+          team2 |-> new Board(teamsSolutions(team1))};
+
+      )
+    pre card (dom teamsSolutions) = 2 and
+      forall team in set dom teamsSolutions &
+        team in set championship.getTeams() and
+      forall solution in set rng teamsSolutions &
+        len solution = Board`attemptLength
+
+    post forall team in set (dom gameInstances) &
+      let opponentTeam = dom teamsSolutions \ {team} in
+        {gameInstances(team).getSolution()} =
+        rng (opponentTeam <: teamsSolutions);
+
+
+    -- Constructor needed to recreate a game from the information of a file
+    public Game : map String to Board ==> Game
+    Game (storedGameInstances) ==
+      gameInstances := storedGameInstances
+    pre card (dom storedGameInstances) = 2
+    post gameInstances = storedGameInstances;
+
+
+
+    public getParticipantTeams : () ==> set of String
+    getParticipantTeams () == return dom gameInstances
+    post RESULT = dom gameInstances;
+
+
+    public getBoardPlayedByTeam : String ==> Board
+    getBoardPlayedByTeam (team) == return gameInstances(team)
+    post RESULT = gameInstances(team);
+
+
+    public getBoardPlayedByOpponent : String ==> Board
+    getBoardPlayedByOpponent (team) ==
+      let opponent in set (dom gameInstances)\{team}
+      in
+      return gameInstances(opponent)
+    pre team in set (dom gameInstances)
+
+    post RESULT in set rng gameInstances
+      and {RESULT} = rng ({team} <-: gameInstances);
+
+
+    -- Operators needed to write a Game to a file
+    private dumpGameInstanceToString : () ==> String
+    dumpGameInstanceToString () ==
+      let {team1, team2} = dom gameInstances in
+      return "{\"" ^ team1 ^ "\" |-> " ^ gameInstances(team1).dumpBoardToString() ^ ", "
+        ^ "\"" ^ team2 ^ "\" |-> " ^ gameInstances(team2).dumpBoardToString() ^ "}"
+    pre card (dom gameInstances) = 2;
+
+    public dumpGameToString : () ==> String
+    dumpGameToString () == return "new Game(" ^ dumpGameInstanceToString() ^ ")";
+
+end Game
+\end{vdm_al}
+
+\subsection{Championship}
+\begin{vdm_al}
+class Championship
+
+  types
+    public String = Utilities`String;
+
+  instance variables
+    private teams : set of String;
+    inv card teams >= 2 and (card teams) mod 2 = 0;
+
+    private games : set of Game := {};
+    inv forall game in set games & game.getParticipantTeams() subset teams;
+
+
+  operations
+
+    public Championship: set of String ==> Championship
+    Championship(participants) == (
+
+      teams := participants;
+
+    )
+    pre card participants >= 2 and (card participants) mod 2 = 0
+    post teams = participants;
+
+
+    -- Constructor needed to recreate a championship from the information of
+    -- a file
+    public Championship: set of String * set of Game ==> Championship
+    Championship(participants, gamesPlayed) == (
+      teams := participants;
+      games := gamesPlayed
+    )
+    pre (card participants) >= 2 and (card participants) mod 2 = 0 and
+      forall game in set gamesPlayed & game.getParticipantTeams() subset participants
+    post teams = participants and games = gamesPlayed;
+
+
+    public getTeams: () ==> set of String
+    getTeams() == (
+
+      return teams;
+
+    )
+    post RESULT = teams;
+
+
+    public getGames: () ==> set of Game
+    getGames() == (
+
+      return games;
+
+    )
+    post RESULT = games;
+
+
+    public addQuickGame: String * String ==> Game
+    addQuickGame(team1, team2) == (
+
+      dcl g : Game := new Game(
+        {team1 |-> Color`getRandomSequence(Board`attemptLength),
+          team2 |-> Color`getRandomSequence(Board`attemptLength)},
+        self);
+
+      games := games union {g};
+
+      return g;
+
+    )
+    pre {team1, team2} subset teams and
+      {team1, team2} not in set oldMatchups()
+    post RESULT in set games;
+
+
+    public addGame : map String to (seq of Color`Color) ==> Game
+    addGame(teamsSolutions) == (
+
+      dcl g : Game := new Game(teamsSolutions, self);
+
+      games := games union {g};
+
+      return g;
+
+    )
+    pre dom teamsSolutions subset teams and
+      dom teamsSolutions not in set oldMatchups() and
+      forall solution in set rng teamsSolutions & len solution = Board`attemptLength
+    post RESULT in set games;
+
+
+    public addTeams : set of String ==> ()
+    addTeams(newTeams) == (
+
+      teams := teams union newTeams;
+
+    )
+    pre (newTeams inter teams = {}) and (card newTeams) mod 2 = 0
+    post teams = teams~ union newTeams;
+
+    -- The codemaker gets one point for each guess a codebreaker makes. An
+    -- extra point is earned by the codemaker if the codebreaker doesn't
+    -- guess the pattern exactly in the last guess.
+    public getScore : String ==> nat
+    getScore (team) == (
+      dcl gamesPlayed : set of Game := gamesPlayedByTeam(team),
+        scoreByWinning : nat := 0,
+        scoreByUndefeated : nat := 0;
+
+        for board in getBoardsCrackedByOpponent(gamesPlayed, team) do
+          scoreByWinning := scoreByWinning + board.numberOfTriesMade();
+
+        for board in getBoardsUncrackedByOpponent(gamesPlayed, team) do
+          scoreByUndefeated := scoreByUndefeated + board.numberOfTriesMade()+1;
+
+        return scoreByWinning + scoreByUndefeated;
+
+    )
+    pre team in set teams;
+
+    private oldMatchups : () ==> set of set of String
+    oldMatchups () ==
+      return {oldGames.getParticipantTeams() | oldGames in set games}
+    post games = {} => RESULT = {};
+
+
+    public gamesPlayedByTeam : String ==> set of Game
+    gamesPlayedByTeam (team) ==
+      return {game | game in set games & team in set game.getParticipantTeams()}
+    post forall game in set RESULT
+      & team in set game.getParticipantTeams();
+
+
+    public getNumberOfTriesWinner : () ==> nat
+    getNumberOfTriesWinner () ==
+      let scoreBoard = getScoreboard()
+      in
+        return maximumValue(rng scoreBoard)
+    pre let scoreboard = getScoreboard()
+      in card dom (scoreboard :> {maximumValue(rng scoreboard)}) = 1;
+
+    public getScoreboard : () ==> map String to nat
+    getScoreboard () ==
+      return { team |-> getScore(team) | team in set teams };
+
+
+    -- Operators needed to write a Championship to a file
+    private teamsToString : () ==> String
+    teamsToString () ==
+      return Utilities`setToString[String](teams,
+        lambda x : String & "\"" ^ x ^ "\"");
+
+    -- private gamesToString : () ==> String
+    -- gamesToString () ==
+    -- return Utilities`setToString[Game](games,
+    --  lambda x : Game & x.dumpGameToString());
+    --
+    -- I wanted to implement "gamesToString" like this, but while it works
+    -- with VDMTools, it does not work with Overture for some strange reason.
+    -- Overture crashes with the following error:
+    -- Illegal clone: java.lang.NullPointerException
+    --
+    -- Main 206: Error evaluating code
+    -- Detailed Message: Illegal clone: java.lang.NullPointerException
+    --
+    -- So I needed to use the ugly implementation below, because it works in
+    -- both systems.
+    --  - Rolando
+
+    private gamesToString : () ==> String
+    gamesToString () ==
+      if card games = 0 then return "{}"
+      else (
+        dcl return_value : String := "{",
+          i : nat1 := 1;
+        for all game in set games do
+          if i < card games then (
+            return_value := return_value  ^ " " ^ game.dumpGameToString() ^ ", ";
+            i := i + 1;
+          )
+          else
+            return_value := return_value ^ " " ^ game.dumpGameToString() ^ "}";
+
+        return return_value;
+      );
+
+    public dumpChampionshipToString : () ==> String
+    dumpChampionshipToString() ==
+      return "new Championship(" ^ teamsToString() ^ ", " ^ gamesToString() ^ ")";
+
+
+    functions
+
+    private getBoardsUncrackedByOpponent : set of Game * String -> seq of Board
+    getBoardsUncrackedByOpponent (games, team) ==
+      if games = {} then []
+      else let game in set games in
+        let boardPlayedByOpponent = game.getBoardPlayedByOpponent(team) in
+          if boardPlayedByOpponent.isGameOver() and
+            not boardPlayedByOpponent.isSolutionCracked() then
+              [boardPlayedByOpponent] ^ getBoardsUncrackedByOpponent(games\{game}, team)
+          else
+            getBoardsUncrackedByOpponent(games\{game}, team)
+
+    post forall board in set elems RESULT & board.isGameOver() and not board.isSolutionCracked();
+
+
+    private getBoardsCrackedByOpponent : set of Game * String -> seq of Board
+    getBoardsCrackedByOpponent (games, team) ==
+      if games = {} then []
+      else let game in set games in
+        let boardPlayedByOpponent = game.getBoardPlayedByOpponent(team) in
+          if boardPlayedByOpponent.isGameOver() and
+            boardPlayedByOpponent.isSolutionCracked() then
+              [boardPlayedByOpponent] ^ getBoardsCrackedByOpponent(games\{game}, team)
+          else
+            getBoardsCrackedByOpponent(games\{game}, team)
+
+    post forall board in set elems RESULT & board.isGameOver() and board.isSolutionCracked();
+
+    
+    private maximumValue : set of nat -> nat
+    maximumValue (s) ==
+      if card s = 1 then
+        let x in set s in x
+      else
+        let x in set s in
+          let max = maximumValue(s\{x}) in
+            if x > max then
+              x
+            else
+              max
+    pre s <> {}
+    post not exists element in set s & element > RESULT;
+
+  
+end Championship
+\end{vdm_al}
+
+\section{Informação de cobertura dos testes}
+
+\subsection{Board}
+\input{specification/Board.vdmpp.tex}
+\subsection{BoardTest}
+\input{specification/BoardTest.vdmpp.tex}
+\subsection{Championship}
+\input{specification/Championship.vdmpp.tex}
+
+Pensamos que a razão pela qual a função ``maximumValue'' não se
+encontra testada a 100\% deve-se à natureza não determinística da
+iteração em variáveis do tipo \texttt{set} o que levou a que nunca
+fosse escolhido um ``X'' que fizesse com que o código seguisse aquele
+caminho.
+
+Assumimos que se a função ``maximumValue'' fosse executada um elevado
+número de vezes, que este caminho de código seria também executado.
+
+\subsection{ChampionshipTest}
+\input{specification/ChampionshipTest.vdmpp.tex}
+
+\subsection{Color}
+\input{specification/Color.vdmpp.tex}
+
+O operador ``randomColor'' não pode ser testado pela ferramenta de
+cobertura de código do Overture devido ao fato de este interpretar o
+operador \verb=||= de forma diferente da do VDMTools, pois quando
+existem no seu interior expressões que utilizem a \emph{keyword}
+``return'', o Overture devolve sempre o resultado da primeira
+expressão com essa \emph{keyword}, ao passo que o VDMTools devolve um
+``return'' aleatoriamente.
+
+\subsection{Game}
+\input{specification/Game.vdmpp.tex}
+\subsection{Tests}
+\input{specification/Tests.vdmpp.tex}
+\subsection{Utilities}
+\input{specification/Utilities.vdmpp.tex}
+A razão pela qual a função ``setToString'' não têm 100\% de cobertura
+é, como referido na seção \ref{sec:leitura_escrita} a implementação
+que gostariamos de usar para o operador ``gamesToString'' não corre no
+Overture, logo o caso de chamar a função ``setToString'' com o
+conjunto vazio não seja a ser testada.
+
+
+\section{Análise da consistência do modelo}
+Para melhorar a qualidade do código foi utilizada, ao longo da
+especificação do modelo, quer a ferramenta ``Integrity Check'' do
+VDMTools, quer a funcionalidade de ``Generate Proof Obligations'' do Overture.
+
+Estas ferramentas permitem indicar locais onde possam ocorrer erros
+sobre determinadas condições, ficando depois a cargo da pessoa que
+está a especificar o modelo garantir que essas condições nunca são
+atingidas.
+
+
+\end{document}
+
+
