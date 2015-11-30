@@ -1,0 +1,25 @@
+class Game
+types
+private code = seq of Piece;
+private attempts = seq of seq of Piece;
+
+
+values
+-- TODO Define values here
+instance variables
+gameOver : bool := false;
+win : bool := false;
+private maxAttempts : nat1 := 8;
+private codeMaker :  Player := new Player();
+private codeBreaker :  Player := new Player();
+
+operations
+public isGameOver : () ==> bool
+			isGameOver () == return gameOver;
+			
+
+functions
+-- TODO Define functiones here
+traces
+-- TODO Define Combinatorial Test Traces here
+end Game

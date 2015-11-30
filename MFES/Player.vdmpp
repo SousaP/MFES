@@ -1,0 +1,25 @@
+class Player
+types
+	public Name = seq of char;
+
+values
+-- TODO Define values here
+instance variables
+private maxAttempts : nat1 := 4;
+private myAttempts : nat1 := 1;
+private points : nat := 0;
+operations
+
+public addAttempts : () ==> ()
+			addAttempts () == myAttempts := myAttempts +1;
+			
+public addPoints : nat ==> ()
+			addPoints (inc) == points := points +inc;
+			
+						
+			
+functions
+-- TODO Define functiones here
+traces
+-- TODO Define Combinatorial Test Traces here
+end Player
