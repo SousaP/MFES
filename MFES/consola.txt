@@ -1,0 +1,2 @@
+create g := new Game()
+print g.getCode

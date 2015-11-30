@@ -24,8 +24,8 @@ operations
 			public won: () ==> bool
 			won() == return win;
 			
-			public getCode: () ==> seq1 of char
-			getCode() == return code;
+			public getCode: () ==> bool
+			getCode() == return win;
 			
 
 functions
