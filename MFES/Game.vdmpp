@@ -14,6 +14,10 @@ private codeMaker :  Player := new Player();
 private codeBreaker :  Player := new Player();
 
 operations
+--public Game : seq of char ==> Game
+--			Game(n) == (name := n; return self); 
+
+
 public isGameOver : () ==> bool
 			isGameOver () == return gameOver;
 			

@@ -1,14 +1,17 @@
 class Player
 types
-	public Name = seq of char;
 
 values
 -- TODO Define values here
 instance variables
-private maxAttempts : nat1 := 4;
+public name : seq of char;
 private myAttempts : nat1 := 1;
 private points : nat := 0;
 operations
+
+public Player : seq of char ==> Player
+			Player(n) == (name := n; return self); 
+
 
 public addAttempts : () ==> ()
 			addAttempts () == myAttempts := myAttempts +1;
@@ -16,7 +19,11 @@ public addAttempts : () ==> ()
 public addPoints : nat ==> ()
 			addPoints (inc) == points := points +inc;
 			
-						
+public getPoints : () ==> nat
+				getPoints () == return points;
+
+public getAttempts : () ==> nat1
+				getAttempts () == return myAttempts;				
 			
 functions
 -- TODO Define functiones here
