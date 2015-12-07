@@ -1,7 +1,12 @@
 class Piece
 
+types
+			public Color = char
+			inv color == color in set {'b', 'g', 'r', 'o', 'y', 'm'};
+values
+
 instance variables
-			static public Colors: set of char := {'b', 'g', 'r', 'o', 'y', 'm'};
+			static public Colors: set of Color := {'b', 'g', 'r', 'o', 'y', 'm'};
 
 operations
 			
@@ -16,8 +21,8 @@ operations
 
 		static private randomPiece: () ==> char
 		randomPiece() == (
-		--return Colors(MATH`rand(5));
+		return Colors(MATH.rand(5));
 		)
-		post RESULT in set Colors;
+post RESULT in set Colors;
 
 end Piece
