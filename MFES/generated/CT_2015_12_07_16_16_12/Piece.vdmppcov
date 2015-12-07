@@ -14,12 +14,12 @@ operations
 
 		)
 		post len RESULT = length;-- and
-		--	forall color in set elems RESULT & color in set ColorsSet;
+		--	forall color in set elems RESULT & color in set Colors;
 
 
 		static private randomPiece: () ==> Color
 		randomPiece() == (
-		return Colors(MATH`rand(5)+1);
+		return Colors(MATH`rand(5));
 		)
 
 end Piece

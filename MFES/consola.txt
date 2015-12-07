@@ -1,6 +1,6 @@
 create g := new Game(2)
+print g.getRandomSequence()
 print g.getSolution()
-print g.getCode
 
 
 create p := new Piece()

@@ -62,12 +62,11 @@ operations
 		gamePlayers.winGame();
 		AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
 		);
-		--R2 -> O sistema deve fornecer a capacidade de definir o código secreto de forma automática ( jogo contra bot )
+		--
 		private test5: () ==> ()
 		test5() ==
 		(	
-			gameBot.makeAPlay(gameBot.getSolution());			
-			AssertTrue(gameBot.isSolutionCracked() and gameBot.isGameOver());
+	gamePlayers.setMaxAttempts(10);	
 		);
 	traces	
 	 t1:test1();  
