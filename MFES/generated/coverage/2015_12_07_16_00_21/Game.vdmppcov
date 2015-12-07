@@ -86,7 +86,7 @@ operations
 			-- Just a temporary variable to hold the value of the sum expression
 			-- (see previous URL)
 				(dcl temp : nat := 0;
-					for all color in set Piece`ColorsSet do
+					for all color in set Piece`Colors do
 						temp := temp +
 							min(
 								countOccurences[Piece`Color](solution, color),

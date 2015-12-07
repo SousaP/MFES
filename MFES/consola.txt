@@ -1,4 +1,5 @@
-create g := new Game()
+create g := new Game(2)
+print g.getSolution()
 print g.getCode
 
 
