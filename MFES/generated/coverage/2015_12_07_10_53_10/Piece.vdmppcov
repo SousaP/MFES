@@ -19,9 +19,9 @@ operations
 			forall color in set elems RESULT & color in set Colors;
 
 
-		static private randomPiece: () ==> Color
+		static private randomPiece: () ==> char
 		randomPiece() == (
-		return Colors(MATH`rand(5));
+		return Colors(MATH.rand(5));
 		)
 post RESULT in set Colors;
 
