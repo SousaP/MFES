@@ -1,2 +1,9 @@
 create g := new Game()
 print g.getCode
+
+
+create p := new Piece()
+print p.getRandomSequence(4)
+
+create t := new Test()
+print t.runAllTests()

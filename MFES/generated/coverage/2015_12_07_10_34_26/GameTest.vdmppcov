@@ -1,0 +1,28 @@
+class GameTest
+
+operations
+		static public AssertTrue : bool ==> ()
+		AssertTrue(a) == return
+    pre a;
+    
+     public static main: () ==> ()
+                main() ==
+                (
+                        new GameTest().runAllTests();
+                        
+                );
+		
+		static public runAllTests : () ==> ()
+		runAllTests () == (
+			test1();
+		);
+
+		static public test1: () ==> ()
+		test1() ==
+		(
+		dcl g: Game := new Game (['b','b','b','b']);
+		g.makeAPlay(['b', 'b', 'b', 'b']);
+		AssertTrue(g.isSolutionCracked());
+		);
+	
+end GameTest
