@@ -1,0 +1,128 @@
+class Game
+
+values
+public boardLenght : nat1 = 4;
+instance variables
+			private solution : seq1 of Piece`Color;
+			inv len solution = boardLenght;
+			private attempts : seq of (seq1 of Piece`Color) := [];
+			private gameOver: bool := false;		
+			private maxAttempts: nat1;			
+			private codeMaker:  Player ;
+			private codeBreaker:  Player ;				
+			static private code: seq1 of char:=['A'];
+			
+operations
+--Construtores
+		public Game : seq1 of Piece`Color * seq1 of char * seq1 of char * nat1 ==> Game
+		Game (correctPlay,n,m,trys) == (
+			solution := correctPlay;
+			attempts := [];
+			codeMaker := new Player(n);
+			codeBreaker := new Player(m);
+			maxAttempts := trys;
+		)
+		pre len correctPlay = boardLenght
+		post solution = correctPlay and
+			attempts = [];	
+			
+		
+		public Game : nat1 ==> Game
+		Game(trys) == (
+			solution := ['b','b','b','b'];
+			attempts := [];
+			codeMaker := new Player();
+			codeBreaker := new Player();
+			maxAttempts := trys;
+		)
+		post len solution = boardLenght and attempts = [];	
+				
+--Gets
+		public getSolution: () ==> seq1 of Piece`Color
+		getSolution() == return solution;
+		
+		public getCodeMaker: () ==> Player
+		getCodeMaker() == return codeMaker;
+		
+		public getCodeBreaker: () ==> Player
+		getCodeBreaker() == return codeBreaker;
+		
+--Sets
+		public setMaxAttempts:(nat1)==> ()
+		setMaxAttempts(n) == maxAttempts := n;
+		
+		pure public isGameOver : () ==> bool
+			isGameOver () == return isSolutionCracked() or len attempts = maxAttempts			
+		post RESULT = ( isSolutionCracked() or len attempts = maxAttempts);
+		
+		public winGame : () ==> ()
+			winGame() == (codeBreaker.addPoints(3);
+			gameOver := true)
+		pre  isGameOver() = true;
+		
+		pure public isSolutionCracked : () ==> bool
+			isSolutionCracked () == return solution in set elems attempts
+		post solution in set elems attempts => RESULT = true;		
+				
+		public makeAPlay : seq1 of Piece`Color ==> ()
+			makeAPlay (attempt) == attempts := attempts ^ [attempt]
+		pre len attempt = boardLenght and not isGameOver()
+		post attempts = attempts~ ^ [attempt];				
+		
+		public numberOfTriesRemaining : () ==> nat
+			numberOfTriesRemaining () == return maxAttempts - len attempts
+		pre (len attempts) <= maxAttempts
+		post RESULT = maxAttempts - len attempts;
+		
+		public calculateRightColorsInRightPlaces : seq of Piece`Color ==> nat
+			calculateRightColorsInRightPlaces (attempt) ==
+				return numberOfMatchingElems[Piece`Color](attempt, solution)
+		pre len attempt = len solution
+		post RESULT <= len solution;
+			
+			
+		public calculateRightColorsInWrongPlaces : seq of Piece`Color ==> nat
+			calculateRightColorsInWrongPlaces (attempt) ==
+			-- Just a temporary variable to hold the value of the sum expression
+			-- (see previous URL)
+				(dcl temp : nat := 0;
+					for all color in set Piece`Colors do
+						temp := temp +
+							min(
+								countOccurences[Piece`Color](solution, color),
+								countOccurences[Piece`Color](attempt, color));
+					return temp - calculateRightColorsInRightPlaces(attempt);
+				)
+		pre len attempt = len solution
+		post RESULT <= len solution;
+
+functions
+
+		-- Return the number of elements in the sequence that are a match both
+private numberOfMatchingElems[@T] : seq of @T * seq of @T -> nat
+			numberOfMatchingElems (firstSeq, secondSeq) ==
+				if firstSeq = [] then
+					0
+				elseif hd firstSeq = hd secondSeq then
+					1 + numberOfMatchingElems[@T](tl firstSeq, tl secondSeq)
+				else
+					numberOfMatchingElems[@T](tl firstSeq, tl secondSeq)
+			pre (len firstSeq) = (len secondSeq)
+			post firstSeq = [] => RESULT = 0;
+
+-- Return the number of times the element appears in the sequence
+		private countOccurences[@T] : seq of @T * @T -> nat
+			countOccurences (sequence, element) ==
+				if sequence = [] then
+					0
+				elseif hd sequence = element then
+					1 + countOccurences[@T](tl sequence, element)
+				else
+					countOccurences[@T](tl sequence, element)
+			post sequence = [] => RESULT = 0;
+			
+			static public min : nat * nat -> nat
+			min(a, b) ==
+				if a <= b then a
+				else b;
+end Game

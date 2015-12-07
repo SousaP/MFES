@@ -1,0 +1,78 @@
+class GameTest
+
+instance variables
+      gamePlayers: Game := new Game(['b','b','b','b'],['z','e'],['t','o','n','y'],2);
+      gameBot: Game := new Game(2);
+
+operations    
+    public static main: () ==> ()
+              main() ==
+               (
+                      new GameTest().runAllTests();
+    );
+		
+	private runAllTests : () ==> ()
+		runAllTests () == (
+			test1();
+			test2();
+			test3();
+			test4();
+		);
+	
+	static public AssertTrue : bool ==> ()
+		AssertTrue(cond) == return
+    pre cond;
+    
+		--R1 -> O sistema deve fornecer a capacidade de iniciar um jogo contra um bot
+		private test1: () ==> ()
+		test1() ==
+		(		
+		gameBot.makeAPlay(gameBot.getSolution());			
+		AssertTrue(gameBot.isSolutionCracked() and gamePlayers.isGameOver());
+		);
+		
+		--R2 -> O sistema deve fornecer a capacidade de iniciar um jogo de dois jogadores
+		private test2: () ==> ()
+		test2() ==
+		(		
+		gamePlayers.makeAPlay(['b', 'b', 'b', 'b']);			
+		AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
+		);
+		
+		--R -> O sistema deve guardar registos de melhores pontuações
+		private test3: () ==> ()
+		test3() ==
+		(		
+		gamePlayers.makeAPlay(['b', 'g', 'b', 'b']);	
+		gamePlayers.makeAPlay(['b', 'b', 'b', 'b']);	
+		gamePlayers.winGame();
+		AssertTrue(gamePlayers.getCodeBreaker().getPoints() = 3 and gamePlayers.isGameOver());
+		);
+		--R1 -> O sistema deve fornecer a possibilidade de escolher o número de partidas
+		private test4: () ==> ()
+		test4() ==
+		(	
+		-- 2 attempts default
+		gamePlayers.setMaxAttempts(10);	
+		gamePlayers.makeAPlay(['b', 'g', 'b', 'b']);	
+		gamePlayers.makeAPlay(['b', 'g', 'o', 'b']);	
+		gamePlayers.makeAPlay(['b', 'g', 'b', 'o']);	
+		gamePlayers.makeAPlay(['o', 'g', 'b', 'b']);	
+		gamePlayers.makeAPlay(['b', 'b', 'b', 'b']);	--Solution
+		gamePlayers.winGame();
+		AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
+		);
+		--
+		private test5: () ==> ()
+		test5() ==
+		(	
+	gamePlayers.setMaxAttempts(10);	
+		);
+	traces	
+	 t1:test1();  
+   t2:test2();
+   t3:test3(); 
+   t4:test4();          
+   t5:test5();
+            
+end GameTest
