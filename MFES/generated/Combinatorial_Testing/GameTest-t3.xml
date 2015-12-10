@@ -1,9 +1,3 @@
 <traces>
-	<class name="GameTest">
-		<trace name="t3" testcount="1" filename="GameTest.vdmpp" line="78" column="4" subset="1.0" reduction="NONE" seed="999">
-			<test no="1">test3()</test>
-			<result no="1" verdict="FAILED">Error 4071: Precondition failure: pre_AssertTrue in &apos;GameTest&apos; at line 24:9</result>
-			<status verdict="FAILED" testcount="1" skippedcount="0" faildcount="1" inconclusivecount="0"></status>
-		</trace>
-	</class>
+	<class name="GameTest"></class>
 </traces>

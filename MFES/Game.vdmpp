@@ -3,23 +3,23 @@ class Game
 values
 public boardLenght : nat1 = 4;
 instance variables
-			private solution : seq1 of Piece`Color;
+			public solution : seq1 of Piece`Color;
 			inv len solution = boardLenght;
 			private attempts : seq of (seq1 of Piece`Color) := [];
 			private gameOver: bool := false;		
 			private maxAttempts: nat1;			
-			private codeMaker:  Player ;
-			private codeBreaker:  Player ;				
+			public codeMaker:  Player ;
+			public codeBreaker:  Player ;				
 			static private code: seq1 of char:=['A'];
 			
 operations
 --Construtores
 		public Game : seq1 of Piece`Color * seq1 of char * seq1 of char * nat1 ==> Game
-		Game (correctPlay,n,m,trys) == (
+		Game (correctPlay,m,b,trys) == (
 			solution := correctPlay;
 			attempts := [];
-			codeMaker := new Player(n);
-			codeBreaker := new Player(m);
+			codeMaker := new Player(m);
+			codeBreaker := new Player(b);
 			maxAttempts := trys;
 		)
 		pre len correctPlay = boardLenght
@@ -36,29 +36,25 @@ operations
 			maxAttempts := trys;
 		)
 		post len solution = boardLenght and attempts = [];	
-				
---Gets
-		public getSolution: () ==> seq1 of Piece`Color
-		getSolution() == return solution;
-		
-		public getCodeMaker: () ==> Player
-		getCodeMaker() == return codeMaker;
-		
-		public getCodeBreaker: () ==> Player
-		getCodeBreaker() == return codeBreaker;
-		
---Sets
+
 		public setMaxAttempts:(nat1)==> ()
 		setMaxAttempts(n) == maxAttempts := n;
 		
 		pure public isGameOver : () ==> bool
-			isGameOver () == return isSolutionCracked() or len attempts = maxAttempts			
+			isGameOver () == (return isSolutionCracked() or len attempts = maxAttempts)		
 		post RESULT = ( isSolutionCracked() or len attempts = maxAttempts);
 		
 		public winGame : () ==> ()
 			winGame() == (codeBreaker.addPoints(3);
 			gameOver := true)
 		pre  isGameOver() = true;
+		
+		public changePlayer: () ==> ()
+		changePlayer () == (
+		dcl tmp:  Player := codeMaker; 	
+		codeMaker:=codeBreaker;
+		codeBreaker := tmp;
+		);
 		
 		pure public isSolutionCracked : () ==> bool
 			isSolutionCracked () == return solution in set elems attempts
