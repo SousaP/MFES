@@ -156,13 +156,11 @@ operations
    
    
   public calculateRightColorsInWrongPlaces : seq of Piece`Color ==> nat
-   calculateRightColorsInWrongPlaces (attempt) ==
-   -- Just a temporary variable to hold the value of the sum expression
+   calculateRightColorsInWrongPlaces (attempt) == 
+    (dcl temp : nat := 0;
 (*@
 \label{countOccurences:112}
 @*)
-   -- (see previous URL)
-    (dcl temp : nat := 0;
      for all color in set Piece`ColorsSet do
       temp := temp +
        min(
@@ -171,11 +169,11 @@ operations
      return temp - calculateRightColorsInRightPlaces(attempt);
     )
   pre len attempt = len solution
+  post RESULT <= len solution;
+
 (*@
 \label{min:122}
 @*)
-  post RESULT <= len solution;
-
 functions
 
   -- Return the number of elements in the sequence that are a match both

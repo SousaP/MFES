@@ -34,7 +34,7 @@ operations
   AssertTrue(cond) == return
     pre cond;
     
-  --R1 -> O sistema deve fornecer a capacidade de iniciar um jogo contra um bot
+  --Teste para criar um jogo player vs PC e fazer uma jogada com a solução.
   private test1: () ==> ()
 (*@
 \label{test1:29}
@@ -46,7 +46,7 @@ operations
   AssertTrue(gameBot.isSolutionCracked() and gameBot.isGameOver());
   );
   
-  --R2 -> O sistema deve fornecer a capacidade de iniciar um jogo de dois jogadores
+  --Teste para criar um jogo player vs player e fazera um jogada com a solução definida pelo codeMaker.
 (*@
 \label{test2:37}
 @*)
@@ -61,7 +61,7 @@ operations
 (*@
 \label{test3:45}
 @*)
-  --R -> O sistema deve guardar registos de melhores pontuações
+  --Teste para verificar se o numero de pontos ganhos é igual as tentativas.
   private test3: () ==> ()
   test3() ==
   (  
@@ -74,24 +74,23 @@ operations
 \label{test4:54}
 @*)
   );
-  --R1 -> O sistema deve fornecer a possibilidade de escolher o número de partidas
+  --Teste para verificar a mudança de tentativas.
   private test4: () ==> ()
   test4() ==
-  ( 
-  -- 5 attempts default
-  dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,1);
+  (  
+  dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,1);  -- 5 attempts default
   gamePlayers.setMaxAttempts(2); 
   gamePlayers.makeAPlay("bgbb");
   AssertTrue(gamePlayers.numberOfTriesRemaining() = 1);
 
+  gamePlayers.makeAPlay("bbbb"); --Solution
 (*@
 \label{test5:65}
 @*)
-  gamePlayers.makeAPlay("bbbb"); --Solution
   gamePlayers.winGame();
   AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
   );
-  --R3 -> O sistema deve fornecer a capacidade de criar tentativas para o codebreaker decifrar o código (cada tentativa corresponde a colocar 4 peças no tabuleiro)
+  --Teste para verificar várias jogadas do codeBreaker.
   private test5: () ==> ()
   test5() ==
   ( 
@@ -101,10 +100,10 @@ operations
   gamePlayers.makeAPlay("bgbo");
   gamePlayers.makeAPlay("bgyb");
   gamePlayers.makeAPlay("rgbb");
+  gamePlayers.makeAPlay("bgbo");
 (*@
 \label{test6:79}
 @*)
-  gamePlayers.makeAPlay("bgbo");
   gamePlayers.makeAPlay("bgbm");
   gamePlayers.makeAPlay("bbbb"); --Solution
   AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
@@ -114,14 +113,14 @@ operations
   test6() ==
   ( 
   dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,2); 
-  --codeMaker => Ze \-||-/ codeBreaker => tony
+  --codeMaker => Ze || codeBreaker => tony
   gamePlayers.changePlayer();
   AssertTrue(gamePlayers.getCodeBreaker().getName() = "ze" and gamePlayers.getCodeMaker().getName() = "tony" and gamePlayers.getMatches()=1);
   );
+  -- Teste criar equipa
 (*@
 \label{test7:93}
 @*)
-  -- Teste relacionados com equipa
   private test7: () ==> ()
   test7() ==
   ( 
@@ -130,20 +129,20 @@ operations
    dcl t:Team:= new Team("FEUPinhos",p1,p2);  
   AssertTrue(t.getPlayer1().getName()="ze" and t.getPlayer2().getName()="tony" and t.getName() = "FEUPinhos");
   );
+  -- Teste para calcular cores em sitio correcto e cores certas 
 (*@
 \label{test8:102}
 @*)
-  -- Teste para calcular cores em sitio correcto e sitio 
   private test8: () ==> ()
   test8() ==
   ( 
   dcl tempGame :Game := new Game("baaa","ze","tony",5,4,1);
   AssertTrue(tempGame.calculateRightColorsInRightPlaces("baac")=3 and tempGame.calculateRightColorsInWrongPlaces("cccb")= 1);
   );
+  -- Teste para torneio
 (*@
 \label{test9:109}
 @*)
-  -- Teste para torneio
   private test9: () ==> ()
   test9() ==
   ( 
@@ -161,11 +160,11 @@ operations
    tor.startGame ("bbbb",p1,p3);
    AssertTrue(tor.game.isSolutionCracked() = false);
   );
-  
+  --Teste para escrever torneio num ficheiro
+  private test10: () ==> ()
 (*@
 \label{test10:128}
 @*)
-  private test10: () ==> ()
   test10() ==
   ( 
    dcl p1:Player:= new Player("ze");
@@ -186,13 +185,13 @@ operations
   t1:test1();  
    t2:test2();
    t3:test3(); 
-    t4:test4();          
+   t4:test4();          
    t5:test5();
    t6:test6();
    t7:test7();
-  t8:test8();
-  t9:test9();
-  t10:test10();
+   t8:test8();
+   t9:test9();
+   t10:test10();
             
 end GameTest
 \end{vdmpp}
