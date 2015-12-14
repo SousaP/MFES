@@ -24,7 +24,7 @@ operations
 		AssertTrue(cond) == return
     pre cond;
     
-		--R1 -> O sistema deve fornecer a capacidade de iniciar um jogo contra um bot
+		--Teste para criar um jogo player vs PC e fazer uma jogada com a solução.
 		private test1: () ==> ()
 		test1() ==
 		(		
@@ -33,7 +33,7 @@ operations
 		AssertTrue(gameBot.isSolutionCracked() and gameBot.isGameOver());
 		);
 		
-		--R2 -> O sistema deve fornecer a capacidade de iniciar um jogo de dois jogadores
+		--Teste para criar um jogo player vs player e fazera um jogada com a solução definida pelo codeMaker.
 		private test2: () ==> ()
 		test2() ==
 		(		
@@ -42,7 +42,7 @@ operations
 		AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
 		);
 		
-		--R -> O sistema deve guardar registos de melhores pontuações
+		--Teste para verificar se o numero de pontos ganhos é igual as tentativas.
 		private test3: () ==> ()
 		test3() ==
 		(		
@@ -52,12 +52,11 @@ operations
 		gamePlayers.winGame();
 		AssertTrue(gamePlayers.getCodeMaker().getPoints() = 2  and gamePlayers.isGameOver());
 		);
-		--R1 -> O sistema deve fornecer a possibilidade de escolher o número de partidas
+		--Teste para verificar a mudança de tentativas.
 		private test4: () ==> ()
 		test4() ==
-		(	
-		-- 5 attempts default
-		dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,1);
+		(		
+		dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,1); 	-- 5 attempts default
 		gamePlayers.setMaxAttempts(2);	
 		gamePlayers.makeAPlay("bgbb");
 		AssertTrue(gamePlayers.numberOfTriesRemaining() = 1);
@@ -66,7 +65,7 @@ operations
 		gamePlayers.winGame();
 		AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
 		);
-		--R3 -> O sistema deve fornecer a capacidade de criar tentativas para o codebreaker decifrar o código (cada tentativa corresponde a colocar 4 peças no tabuleiro)
+		--Teste para verificar várias jogadas do codeBreaker.
 		private test5: () ==> ()
 		test5() ==
 		(	
@@ -86,11 +85,11 @@ operations
 		test6() ==
 		(	
 		dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,2);	
-		--codeMaker => Ze \-||-/ codeBreaker => tony
+		--codeMaker => Ze || codeBreaker => tony
 		gamePlayers.changePlayer();
 		AssertTrue(gamePlayers.getCodeBreaker().getName() = "ze" and gamePlayers.getCodeMaker().getName() = "tony" and gamePlayers.getMatches()=1);
 		);
-		-- Teste relacionados com equipa
+		-- Teste criar equipa
 		private test7: () ==> ()
 		test7() ==
 		(	
@@ -99,7 +98,7 @@ operations
 			dcl t:Team:= new Team("FEUPinhos",p1,p2);		
 		AssertTrue(t.getPlayer1().getName()="ze" and t.getPlayer2().getName()="tony" and t.getName() = "FEUPinhos");
 		);
-		-- Teste para calcular cores em sitio correcto e sitio 
+		-- Teste para calcular cores em sitio correcto e cores certas 
 		private test8: () ==> ()
 		test8() ==
 		(	
@@ -124,7 +123,7 @@ operations
 			tor.startGame ("bbbb",p1,p3);
 			AssertTrue(tor.game.isSolutionCracked() = false);
 		);
-		
+		--Teste para escrever torneio num ficheiro
 		private test10: () ==> ()
 		test10() ==
 		(	
@@ -146,12 +145,12 @@ operations
 	 t1:test1();  
    t2:test2();
    t3:test3(); 
-    t4:test4();          
+   t4:test4();          
    t5:test5();
    t6:test6();
    t7:test7();
-  t8:test8();
-  t9:test9();
-  t10:test10();
+   t8:test8();
+   t9:test9();
+   t10:test10();
             
 end GameTest

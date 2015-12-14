@@ -107,9 +107,7 @@ operations
 			
 			
 		public calculateRightColorsInWrongPlaces : seq of Piece`Color ==> nat
-			calculateRightColorsInWrongPlaces (attempt) ==
-			-- Just a temporary variable to hold the value of the sum expression
-			-- (see previous URL)
+			calculateRightColorsInWrongPlaces (attempt) ==	
 				(dcl temp : nat := 0;
 					for all color in set Piece`ColorsSet do
 						temp := temp +
