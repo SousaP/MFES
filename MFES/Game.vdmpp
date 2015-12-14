@@ -8,31 +8,33 @@ instance variables
 			private maxAttempts: nat1;			
 			private codeMaker:  Player ;
 			private codeBreaker:  Player ;				
-			private boardLenght: nat1 :=4;
+			private boardLenght: nat1;
+			private matches: nat1;			
 			
 operations
 --Construtores
-		public Game : seq1 of Piece`Color * String * String * nat1 * nat1 ==> Game
-		Game (correctPlay,m,b,trys,size) == (
+		public Game : seq1 of Piece`Color * String * String * nat1 * nat1 *nat1 ==> Game
+		Game (correctPlay,m,b,trys,size,partidas) == (
 			solution := correctPlay;
 			attempts := [];
 			codeMaker := new Player(m);
 			codeBreaker := new Player(b);
 			maxAttempts := trys;
 			boardLenght := size;
+			matches := partidas;
 		)
-		pre len correctPlay = boardLenght
 		post solution = correctPlay and
-			attempts = [];	
+			attempts = [] and len correctPlay = boardLenght;	
 		
-		public Game : nat1 * nat1 ==> Game
-		Game(trys,size) == (
+		public Game : nat1 * nat1 * nat1 ==> Game
+		Game(trys,size,partidas) == (
+		boardLenght := size;
+		matches := partidas;
 			solution := Piece`getRandomSequence(boardLenght);
 			attempts := [];
 			codeMaker := new Player();
 			codeBreaker := new Player();
-			maxAttempts := trys;
-			boardLenght := size;
+			maxAttempts := trys;			
 		)
 		post len solution = boardLenght and attempts = [];	
 
@@ -40,13 +42,17 @@ operations
 		getSolution() == return solution
 		post RESULT = solution;
 		
-			pure public getCodeBreaker: () ==> Player
+		pure public getCodeBreaker: () ==> Player
 		getCodeBreaker() == return codeBreaker
 		post RESULT = codeBreaker;
 		
 		pure public getCodeMaker: () ==> Player
 		getCodeMaker() == return codeMaker
 		post RESULT = codeMaker;
+		
+		pure public getMatches: () ==> nat1
+		getMatches() == return matches
+		post RESULT = matches;
 
 		public setMaxAttempts:(nat1)==> ()
 		setMaxAttempts(n) == maxAttempts := n;
@@ -69,7 +75,11 @@ operations
 		dcl tmp:  Player := codeMaker; 	
 		codeMaker:=codeBreaker;
 		codeBreaker := tmp;
-		);
+		matches := matches -1;
+		)
+		pre matches > 0
+		post matches >= 0;
+		
 		
 		pure public isSolutionCracked : () ==> bool
 			isSolutionCracked () == return solution in set elems attempts

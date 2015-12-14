@@ -16,7 +16,7 @@ operations
 			
 			public startGame: String * Player * Player ==> ()
 			startGame (code,p1,p2) == (
-			game := new Game(code,p1.getName(),p2.getName(),trys,size);
+			game := new Game(code,p1.getName(),p2.getName(),trys,size,3);
 			);
 						
 			pure public getTeamNames: () ==> set of  String
@@ -30,7 +30,25 @@ operations
 			)
 			pre n in set getTeamNames();
 			
+				public dumpTournamentshipToString : () ==> String
+		dumpTournamentshipToString() ==
+			return "new Tournament(" ^ teamsToString() ^ ", " ^ gamesToString() ^ ")";
 			
+			private teamsToString:() ==> String
+			teamsToString () == (
+			dcl string :String:= "TeamName";
+			for all n in set getTeamNames() do
+			string :=  string ^";" ^ n;
+			return string;
+			);
+			
+			private gamesToString:() ==> String
+			gamesToString () == (
+			dcl string :String:= "Games";
+			for all n in set getTeamNames() do
+			string :=  string ^";" ^ n;
+			return string;
+			);
 functions
  		 
 traces
