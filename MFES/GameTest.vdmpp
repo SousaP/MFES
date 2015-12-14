@@ -19,6 +19,7 @@ operations
 			test4();
 			test5();
 			test6();
+			test7();
 		);
 	
 	static public AssertTrue : bool ==> ()
@@ -82,7 +83,16 @@ operations
 		--gamePlayers: Game := new Game(['b','b','b','b'],['z','e'],['t','o','n','y'],5);
 		--codeMaker => Ze \-||-/ codeBreaker => tony
 		gamePlayers.changePlayer();
-		AssertTrue(gamePlayers.codeBreaker.name = ['z','e'] and gamePlayers.codeMaker.name = ['t','o','n','y']);
+		AssertTrue(gamePlayers.codeBreaker.getName() = ['z','e'] and gamePlayers.codeMaker.getName() = ['t','o','n','y']);
+		);
+		
+		private test7: () ==> ()
+		test7() ==
+		(	
+		 	dcl p1:Player:= new Player(['z','e']);
+			dcl p2:Player:= new Player(['t','o']);
+			dcl t:Team:= new Team(['n'],{p1,p2});		
+		AssertTrue(t.getPlayer1().getName()=['z']);
 		);
 	traces	
 	 t1:test1();  
@@ -91,5 +101,6 @@ operations
    t4:test4();          
    t5:test5();
    t6:test6();
+   t7:test7();
             
 end GameTest

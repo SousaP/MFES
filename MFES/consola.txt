@@ -8,3 +8,9 @@ print p.getRandomSequence(4)
 
 create t := new Test()
 print t.runAllTests()
+
+
+create p1:= new Player(['z','e'])
+create p2:= new Player(['t','o'])
+create t:= new Team(['n'],p1,p2)
+print t.getPlayer1().getName()

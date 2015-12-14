@@ -1,6 +1,5 @@
 class Game
 
-values
 instance variables
 			public solution : seq1 of Piece`Color;
 			inv len solution = boardLenght;
@@ -10,7 +9,6 @@ instance variables
 			public codeMaker:  Player ;
 			public codeBreaker:  Player ;				
 			public boardLenght: nat1 :=4;
-			static private code: seq1 of char:=['A'];
 			
 operations
 --Construtores

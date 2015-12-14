@@ -1,6 +1,6 @@
 class Player
 instance variables
-			public name: seq1 of char;
+			private name: seq1 of char;
 			private myAttempts: nat1 := 1;
 			private points: nat := 0;
 
@@ -17,6 +17,9 @@ operations
 			public getPoints: () ==> nat
 				getPoints() == return points;
 
+			public getName: () ==> seq1 of char
+				getName() == return name
+			post RESULT = name;
 			public getAttempts: () ==> nat1
 				getAttempts() == return myAttempts;				
 end Player

@@ -1,14 +1,28 @@
 class Tournament
-types
--- TODO Define types here
-values
--- TODO Define values here
+
 instance variables
--- TODO Define instance variables here
+			public teams : seq of Team;
+			public teamsLosers : seq of Team;
+			public game1: Game;
+			public game2: Game;
+			public trys: nat1;
+			public size: nat1;
 operations
--- TODO Define operations here
+		public Tournament: seq of Team * nat1 * nat1 ==> Tournament
+			Tournament (t,ts,s) == (
+			teams :=t;
+			--teamsLosers := {};
+			trys:=ts;
+			size:=s;
+			);
+			
+			public startTournament: seq1 of Piece`Color * seq1 of Piece`Color ==> ()
+			startTournament (code1,code2) == (
+			game1 := new Game(code1,teams(0).getPlayer1().getName(),teams(1).getPlayer1().getName(),trys,size);
+			game2 := new Game(code2,teams(0).getPlayer2().getName(),teams(1).getPlayer2(),trys,size);
+			)
 functions
--- TODO Define functiones here
+ 		 
 traces
 -- TODO Define Combinatorial Test Traces here
 end Tournament

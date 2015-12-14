@@ -1,0 +1,16 @@
+class Utilities
+
+functions
+static public setToSeq[@T] : set of [@T] -> seq of [@T]
+		setToSeq (s) ==
+			if card s = 1 then
+				let x in set s in [x]
+			else
+				let x in set s in
+					[x] ^ setToSeq[@T](s\{x})
+		pre s <> {}
+		post forall element in set s & element in set elems RESULT;
+	
+	
+
+end Utilities

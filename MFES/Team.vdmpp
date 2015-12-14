@@ -1,0 +1,35 @@
+class Team
+
+instance variables
+			private name: seq of char;
+			private players: set of Player;
+			private numberPlayers: nat1;
+operations
+			public Team: seq1 of char * set of Player ==> Team
+			Team (n,p) == (
+			players := p;
+			name := n;
+			numberPlayers := card p;
+			)
+			post numberPlayers = 2;
+		public getPontuacao: () ==> nat
+ 			getPontuacao() == (
+ 			dcl n:nat:=0;
+ 			for all p in set players do 				
+ 				n := n + p.getPoints();	 				
+ 				return n;
+ 				)
+ 				pre numberPlayers > 2;
+ 		
+ 		public getPlayer1: () ==> Player
+ 		getPlayer1() ==(
+ 		for all p in set players do 				
+ 				return p;		
+ 		);
+ 		public getPlayer2: () ==> Player
+ 		getPlayer2() ==(
+ 		return players(2);		
+ 		);
+ functions
+
+end Team
