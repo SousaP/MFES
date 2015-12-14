@@ -24,7 +24,7 @@ operations
 		AssertTrue(cond) == return
     pre cond;
     
-		--Teste para criar um jogo player vs PC e fazer uma jogada com a solução.
+		--Teste para criar um jogo player vs PC e fazer uma jogada com a solucao.
 		private test1: () ==> ()
 		test1() ==
 		(		
@@ -33,7 +33,7 @@ operations
 		AssertTrue(gameBot.isSolutionCracked() and gameBot.isGameOver());
 		);
 		
-		--Teste para criar um jogo player vs player e fazera um jogada com a solução definida pelo codeMaker.
+		--Teste para criar um jogo player vs player e fazera um jogada com a solucao definida pelo codeMaker.
 		private test2: () ==> ()
 		test2() ==
 		(		
@@ -42,7 +42,7 @@ operations
 		AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
 		);
 		
-		--Teste para verificar se o numero de pontos ganhos é igual as tentativas.
+		--Teste para verificar se o numero de pontos ganhos e igual as tentativas.
 		private test3: () ==> ()
 		test3() ==
 		(		
@@ -52,7 +52,7 @@ operations
 		gamePlayers.winGame();
 		AssertTrue(gamePlayers.getCodeMaker().getPoints() = 2  and gamePlayers.isGameOver());
 		);
-		--Teste para verificar a mudança de tentativas.
+		--Teste para verificar a mudanca de tentativas.
 		private test4: () ==> ()
 		test4() ==
 		(		
@@ -65,7 +65,7 @@ operations
 		gamePlayers.winGame();
 		AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
 		);
-		--Teste para verificar várias jogadas do codeBreaker.
+		--Teste para verificar varias jogadas do codeBreaker.
 		private test5: () ==> ()
 		test5() ==
 		(	
@@ -80,7 +80,7 @@ operations
 		gamePlayers.makeAPlay("bbbb");	--Solution
 		AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
 		);
-		-- Testar se ao fim de um jogo a função de cada jogador é trocada.
+		-- Testar se ao fim de um jogo a funcao de cada jogador e trocada.
 		private test6: () ==> ()
 		test6() ==
 		(	
