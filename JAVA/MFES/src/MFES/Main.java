@@ -10,6 +10,7 @@ public class Main {
 	Tournament torneio;
 	Scanner in = new Scanner(System.in);
 	String s;
+	String team1, team2;
 
 	public static void main(String[] args) {
 		System.out.println("##################");
@@ -26,7 +27,7 @@ public class Main {
 	}
 
 	public void Menu() {
-		while (true) {
+		while (!s.equals("4")) {
 			System.out.println("1-Bots");
 			System.out.println("2-Players");
 			System.out.println("3-Tournament");
@@ -73,7 +74,6 @@ public class Main {
 				playGamePlayer();
 			} else if (s.equals("3")) {
 				Team t1, t2;
-				String team1, team2;
 				String p1, p3;
 				String p2, p4;
 				int trys;
@@ -87,8 +87,7 @@ public class Main {
 				System.out.println("Player2:team1 Name:");
 				p2 = in.nextLine();
 				t1 = new Team(team1, new Player(p1), new Player(p2));
-				
-				
+
 				System.out.println("Nome team2:");
 				team2 = in.nextLine();
 				System.out.println("Player1:team2 Name:");
@@ -99,17 +98,14 @@ public class Main {
 				VDMMap map = new VDMMap();
 				map.putIfAbsent(t1.getName(), t1);
 				map.putIfAbsent(t2.getName(), t2);
-				
+
 				System.out.println("Tentativas:");
 				trys = Integer.parseInt(in.nextLine());
 				System.out.println("Partidas:");
 				matches = Integer.parseInt(in.nextLine());
-				
-				
+
 				torneio = new Tournament(map, trys, matches);
 				playTournament();
-			} else if (s.equals("4")) {
-				return;
 			}
 		}
 	}
@@ -124,31 +120,25 @@ public class Main {
 				System.out.println("Ganhou!!");
 				return;
 			}
-			
-			if(game.isGameOver())
-			{
+
+			if (game.isGameOver()) {
 				System.out.println("Perdeu :(");
 				return;
-			}
-			else{
-				System.out.println("Tem + " +game.numberOfTriesRemaining()+ " tentativas");
-				System.out.println("Acertou em " +game.calculateRightColorsInRightPlaces(s)+ " no lugar.");
-				System.out.println("Acertou em " +game.calculateRightColorsInWrongPlaces(s)+ " fora do lugar.");
-				
+			} else {
+				System.out.println("Tem + " + game.numberOfTriesRemaining() + " tentativas");
+				System.out.println("Acertou em " + game.calculateRightColorsInRightPlaces(s) + " no lugar.");
+				System.out.println("Acertou em " + game.calculateRightColorsInWrongPlaces(s) + " fora do lugar.");
+
 			}
 
 		}
 	}
-	
-	public void playGamePlayer(){
-		
+
+	public void playGamePlayer() {
+
 		while (!s.equals("exit")) {
-			try {
-				String[] cls = new String[] {"cmd.exe", "/c", "cls"};
-				Runtime.getRuntime().exec(cls); 
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			System.out.println("\n\n\n\n\n\n");
+
 			System.out.println("Code Breaker: " + game.getCodeBreaker().getName());
 			System.out.println("Solution: " + game.getSolution());
 			System.out.println("Nova tentativa: ");
@@ -158,26 +148,99 @@ public class Main {
 				System.out.println("Ganhou!!");
 				return;
 			}
-			
-			if(game.isGameOver())
-			{
+
+			if (game.isGameOver()) {
 				game.changePlayer();
 				game.winGame();
 				System.out.println("New Code:");
 				s = in.nextLine();
 				game.setSolution(s);
-			}
-			else{
-				System.out.println("Tem + " +game.numberOfTriesRemaining()+ " tentativas");
-				System.out.println("Acertou em " +game.calculateRightColorsInRightPlaces(s)+ " no lugar.");
-				System.out.println("Acertou em " +game.calculateRightColorsInWrongPlaces(s)+ " fora do lugar.");
-				
+			} else {
+				System.out.println("Tem + " + game.numberOfTriesRemaining() + " tentativas");
+				System.out.println("Acertou em " + game.calculateRightColorsInRightPlaces(s) + " no lugar.");
+				System.out.println("Acertou em " + game.calculateRightColorsInWrongPlaces(s) + " fora do lugar.");
+
 			}
 
 		}
 	}
 
-	public void playTournament(){
-		
+	public void playTournament() {
+		String teamPlaying = team1;
+		String notPlaying = team2;
+		Player Player_team1;
+		Player Player_team2;
+		while (!s.equals("exit")) {
+			System.out.println("\n\n\n\n\n\n");
+
+			System.out.println("Code Maker? Team " + teamPlaying);
+			System.out
+					.println("Jogadores disponiveis: " + ((Team) torneio.teams.get(teamPlaying)).getPlayer1().getName()
+							+ " " + ((Team) torneio.teams.get(teamPlaying)).getPlayer2().getName());
+
+			s = in.nextLine();
+
+			if (s.equals(((Team) torneio.teams.get(teamPlaying)).getPlayer1().getName()))
+				Player_team1 = ((Team) torneio.teams.get(teamPlaying)).getPlayer1();
+			else
+				Player_team1 = ((Team) torneio.teams.get(teamPlaying)).getPlayer2();
+
+			System.out.println("Novo Code: ");
+			String code = in.nextLine();
+
+			System.out.println("Code Breaker? Team " + notPlaying);
+			System.out.println("Jogadores disponiveis: " + ((Team) torneio.teams.get(notPlaying)).getPlayer1().getName()
+					+ " " + ((Team) torneio.teams.get(notPlaying)).getPlayer2().getName());
+
+			s = in.nextLine();
+
+			if (s.equals(((Team) torneio.teams.get(notPlaying)).getPlayer1().getName()))
+				Player_team2 = ((Team) torneio.teams.get(notPlaying)).getPlayer1();
+			else
+				Player_team2 = ((Team) torneio.teams.get(notPlaying)).getPlayer2();
+
+			torneio.startGame(code, Player_team1, Player_team2);
+			game = torneio.game;
+			while (!game.isGameOver()) {
+				System.out.println("Nova tentativa: ");
+				s = in.nextLine();
+				game.makeAPlay(s);
+				if (game.isSolutionCracked() && game.getMatches().intValue() < 1) {
+					System.out.println("Ganhou!!");
+					System.out.println("Pontos equipa 1: " + "");
+					return;
+				} else {
+					System.out.println("Tem + " + game.numberOfTriesRemaining() + " tentativas");
+					System.out.println("Acertou em " + game.calculateRightColorsInRightPlaces(s) + " no lugar.");
+					System.out.println("Acertou em " + game.calculateRightColorsInWrongPlaces(s) + " fora do lugar.");
+
+				}
+			}
+
+			if (game.isGameOver()) {
+				if (teamPlaying.equals(team1)) {
+					teamPlaying = team2;
+					notPlaying = team1;
+				} else {
+					teamPlaying = team1;
+					notPlaying = team2;
+
+				}
+				
+				torneio.game.winGame();
+				
+				if(teamPlaying.equals(team1))
+					Player_team1 = torneio.game.getCodeMaker();
+				else
+					Player_team2 = torneio.game.getCodeMaker();
+				
+				System.out.println(Player_team1.getName() + ": " + Player_team1.getPoints());
+				System.out.println(Player_team2.getName() + ": " + Player_team2.getPoints());
+				System.err.println("Pontuaçoes: ");
+				System.err.println(teamPlaying + ": " + ((Team) torneio.teams.get(teamPlaying)).getPontuacao());
+				System.err.println(notPlaying + ": " + ((Team) torneio.teams.get(notPlaying)).getPontuacao());
+
+			}
+		}
 	}
 }

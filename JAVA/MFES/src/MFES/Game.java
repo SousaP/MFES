@@ -91,6 +91,7 @@ public class Game {
         } else {
             codeMaker.addPoints(attempts.size() + 1L);
         }
+        System.err.println(codeMaker.getName()+ " " + codeMaker.getPoints());
     }
 
     public void changePlayer() {

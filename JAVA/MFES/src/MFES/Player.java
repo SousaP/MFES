@@ -6,7 +6,7 @@ import java.util.*;
 
 
 @SuppressWarnings("all")
-public class Player {
+public class Player implements Cloneable  {
     private String name;
     private Number points = 0L;
 
@@ -39,4 +39,14 @@ public class Player {
         return "Player{" + "name := " + Utils.toString(name) + ", points := " +
         Utils.toString(points) + "}";
     }
+    
+    public Object clone() {
+        try {
+        	
+          return super.clone();
+        } catch (CloneNotSupportedException e) {
+          System.out.println("Cloning not allowed.");
+          return this;
+        }
+      }
 }
