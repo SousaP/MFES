@@ -32,7 +32,7 @@ operations
 			
 				public dumpTournamentshipToString : () ==> String
 		dumpTournamentshipToString() ==
-			return "new Tournament(" ^ teamsToString() ^ ", " ^ gamesToString() ^ ")";
+			return "new Tournament(" ^ teamsToString() ^ "\n " ^ gamesToString() ^ ")";
 			
 			private teamsToString:() ==> String
 			teamsToString () == (
@@ -44,9 +44,9 @@ operations
 			
 			private gamesToString:() ==> String
 			gamesToString () == (
-			dcl string :String:= "Games";
-			for all n in set getTeamNames() do
-			string :=  string ^";" ^ n;
+			dcl string :String:= "\nGames;";
+			string :=  string ^  game.getCodeMaker().getName() ^";" ^ game.getCodeBreaker().getName() ^"\n";
+			string := string ^ "Solution;" ^ game.getSolution() ^"\n Attempts: ";
 			return string;
 			);
 functions

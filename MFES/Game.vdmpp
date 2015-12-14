@@ -53,8 +53,12 @@ operations
 		pure public getMatches: () ==> nat1
 		getMatches() == return matches
 		post RESULT = matches;
+		
+		pure public getAttempts: () ==> seq of (seq1 of Piece`Color)
+		getAttempts() == return attempts
+		post RESULT = attempts;
 
-		public setMaxAttempts:(nat1)==> ()
+		public setMaxAttempts:(nat1)==> () 
 		setMaxAttempts(n) == maxAttempts := n;
 		
 		pure public isGameOver : () ==> bool
