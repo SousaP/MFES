@@ -97,7 +97,7 @@ operations
 		
 		public calculateRightColorsInRightPlaces : seq of Piece`Color ==> nat
 			calculateRightColorsInRightPlaces (attempt) ==
-				return numberOfMatchingElems[Piece`Color](attempt, solution)
+				return numberOfMatchingElems(attempt, solution)
 		pre len attempt = len solution
 		post RESULT <= len solution;
 			
@@ -110,8 +110,8 @@ operations
 					for all color in set Piece`ColorsSet do
 						temp := temp +
 							min(
-								countOccurences[Piece`Color](solution, color),
-								countOccurences[Piece`Color](attempt, color));
+								countOccurences(solution, color),
+								countOccurences(attempt, color));
 					return temp - calculateRightColorsInRightPlaces(attempt);
 				)
 		pre len attempt = len solution
@@ -120,26 +120,26 @@ operations
 functions
 
 		-- Return the number of elements in the sequence that are a match both
-private numberOfMatchingElems[@T] : seq of @T * seq of @T -> nat
+private numberOfMatchingElems : seq of Piece`Color * seq of Piece`Color -> nat
 			numberOfMatchingElems (firstSeq, secondSeq) ==
 				if firstSeq = [] then
 					0
 				elseif hd firstSeq = hd secondSeq then
-					1 + numberOfMatchingElems[@T](tl firstSeq, tl secondSeq)
+					1 + numberOfMatchingElems(tl firstSeq, tl secondSeq)
 				else
-					numberOfMatchingElems[@T](tl firstSeq, tl secondSeq)
+					numberOfMatchingElems(tl firstSeq, tl secondSeq)
 			pre (len firstSeq) = (len secondSeq)
 			post firstSeq = [] => RESULT = 0;
 
 -- Return the number of times the element appears in the sequence
-		private countOccurences[@T] : seq of @T * @T -> nat
+		private countOccurences : seq of Piece`Color * Piece`Color -> nat
 			countOccurences (sequence, element) ==
 				if sequence = [] then
 					0
 				elseif hd sequence = element then
-					1 + countOccurences[@T](tl sequence, element)
+					1 + countOccurences(tl sequence, element)
 				else
-					countOccurences[@T](tl sequence, element)
+					countOccurences(tl sequence, element)
 			post sequence = [] => RESULT = 0;
 			
 			static public min : nat * nat -> nat
