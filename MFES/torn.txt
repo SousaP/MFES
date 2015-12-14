@@ -1,0 +1,6 @@
+TeamName;FEPinhos;FEUPinhos
+Players;ze;to
+Solution;bbbb
+Attempts:
+bcbc
+cbcb

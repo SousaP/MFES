@@ -135,9 +135,11 @@ operations
 			dcl p4:Player:= new Player("rui");
 			dcl t2:Team:= new Team("FEPinhos",p1,p2);
 			dcl tor: Tournament := new Tournament({t1.getName() |-> t1, t2.getName() |-> t2},5,4);
-			dcl io : IO := new IO(),
-			writeSuccess : bool := io.fecho("champ1.txt", tor.dumpTournamentToString(), <start>);
-			AssertTrue(writeSuccess = true);
+			dcl io : IO := new IO();
+			tor.startGame("bbbb",p1,p3);
+			tor.game.makeAPlay("bcbc");
+			tor.game.makeAPlay("cbcb");
+			AssertTrue(io.fecho("torn.txt", tor.dumpTournamentToString(), <start>) = true);
 		);
 		
  traces	
