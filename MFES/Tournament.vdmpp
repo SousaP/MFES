@@ -1,26 +1,46 @@
 class Tournament
-
+types
+public String = Utilities`String;
 instance variables
-			public teams : seq of Team;
-			public teamsLosers : seq of Team;
-			public game1: Game;
-			public game2: Game;
+			public teams : set of Team;
+			public game: Game;
 			public trys: nat1;
 			public size: nat1;
 operations
-		public Tournament: seq of Team * nat1 * nat1 ==> Tournament
+		public Tournament: set of Team * nat1 * nat1 ==> Tournament
 			Tournament (t,ts,s) == (
 			teams :=t;
-			--teamsLosers := {};
 			trys:=ts;
 			size:=s;
 			);
 			
-			public startTournament: seq1 of Piece`Color * seq1 of Piece`Color ==> ()
-			startTournament (code1,code2) == (
-			game1 := new Game(code1,teams(0).getPlayer1().getName(),teams(1).getPlayer1().getName(),trys,size);
-			game2 := new Game(code2,teams(0).getPlayer2().getName(),teams(1).getPlayer2(),trys,size);
+			public startGame: String * Player * Player ==> ()
+			startGame (code,p1,p2) == (
+			game := new Game(code,p1.getName(),p2.getName(),trys,size);
+			);
+			
+			
+			pure public getTeamNames: () ==> set of  String
+			getTeamNames() == (
+			dcl temp :set of String := {};
+			
+			for all t in set teams do
+			temp := temp union {t.getName()};
+			return temp;
+			);
+			
+			
+
+			public getTeamPoints:  String  ==> nat
+			getTeamPoints(n) == (
+			for all t in set teams do
+			if(t.getName() = n) then
+			return t.getPontuacao();
+			return -1;
 			)
+			pre n in set getTeamNames();
+			
+			
 functions
  		 
 traces

@@ -1,35 +1,39 @@
 class Team
 
 instance variables
-			private name: seq of char;
-			private players: set of Player;
+			private name: Utilities`String;	
 			private numberPlayers: nat1;
+			private p1: Player;
+			private p2: Player;
 operations
-			public Team: seq1 of char * set of Player ==> Team
-			Team (n,p) == (
-			players := p;
+			public Team: seq1 of char * Player * Player ==> Team
+			Team (n,p_1,p_2) == (
+			p1 := p_1;
+			p2 := p_2;
 			name := n;
-			numberPlayers := card p;
 			)
 			post numberPlayers = 2;
+	
+	
 		public getPontuacao: () ==> nat
  			getPontuacao() == (
- 			dcl n:nat:=0;
- 			for all p in set players do 				
- 				n := n + p.getPoints();	 				
- 				return n;
- 				)
- 				pre numberPlayers > 2;
+ 		 return p1.getPoints() + p2.getPoints()
+ 				);
  		
- 		public getPlayer1: () ==> Player
+ 		pure public getPlayer1: () ==> Player
  		getPlayer1() ==(
- 		for all p in set players do 				
- 				return p;		
- 		);
- 		public getPlayer2: () ==> Player
+ 		return p1 )
+ 		post RESULT = p1;
+ 		
+ 		pure public getPlayer2: () ==> Player
  		getPlayer2() ==(
- 		return players(2);		
- 		);
+ 		return p2 )
+ 		post RESULT = p2;
+ 		
+ 		pure public getName: () ==> Utilities`String
+ 		getName() ==(
+ 		return name )
+ 		post RESULT = name;
  functions
 
 end Team
