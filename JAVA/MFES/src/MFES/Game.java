@@ -65,6 +65,9 @@ public class Game {
     public Number getMatches() {
         return matches;
     }
+    public void setSolution(String s){
+    	solution = s;
+    }
 
     public void setMaxAttempts(final Number n) {
         maxAttempts = n;

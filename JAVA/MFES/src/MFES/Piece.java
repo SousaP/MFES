@@ -17,8 +17,7 @@ public class Piece {
 
     public static String getRandomSequence(final Number length) {
         String seqCompResult_1 = new String(new char[] {  });
-
-        VDMSet set_2 = SetUtil.range(1L, (double) length);
+        VDMSet set_2 = SetUtil.range(1L, length.doubleValue());
 
         for (Iterator iterator_2 = set_2.iterator(); iterator_2.hasNext();) {
             Number i = ((Number) iterator_2.next());
