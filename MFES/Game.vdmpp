@@ -1,7 +1,6 @@
 class Game
 
 values
-public boardLenght : nat1 = 4;
 instance variables
 			public solution : seq1 of Piece`Color;
 			inv len solution = boardLenght;
@@ -10,30 +9,33 @@ instance variables
 			private maxAttempts: nat1;			
 			public codeMaker:  Player ;
 			public codeBreaker:  Player ;				
+			public boardLenght: nat1 :=4;
 			static private code: seq1 of char:=['A'];
 			
 operations
 --Construtores
-		public Game : seq1 of Piece`Color * seq1 of char * seq1 of char * nat1 ==> Game
-		Game (correctPlay,m,b,trys) == (
+		public Game : seq1 of Piece`Color * seq1 of char * seq1 of char * nat1 * nat1 ==> Game
+		Game (correctPlay,m,b,trys,size) == (
 			solution := correctPlay;
 			attempts := [];
 			codeMaker := new Player(m);
 			codeBreaker := new Player(b);
 			maxAttempts := trys;
+			boardLenght := size;
 		)
 		pre len correctPlay = boardLenght
 		post solution = correctPlay and
 			attempts = [];	
 			
 		
-		public Game : nat1 ==> Game
-		Game(trys) == (
+		public Game : nat1 * nat1 ==> Game
+		Game(trys,size) == (
 			solution := Piece`getRandomSequence(boardLenght);
 			attempts := [];
 			codeMaker := new Player();
 			codeBreaker := new Player();
 			maxAttempts := trys;
+			boardLenght := size;
 		)
 		post len solution = boardLenght and attempts = [];	
 

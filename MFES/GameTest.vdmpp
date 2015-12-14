@@ -1,8 +1,8 @@
 class GameTest
 
 instance variables
-      gamePlayers: Game := new Game(['b','b','b','b'],['z','e'],['t','o','n','y'],5);
-      gameBot: Game := new Game(5);
+      gamePlayers: Game := new Game(['b','b','b','b'],['z','e'],['t','o','n','y'],5,4);
+      gameBot: Game := new Game(5,4);
 
 operations    
     public static main: () ==> ()
