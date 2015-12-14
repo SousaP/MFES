@@ -1,0 +1,54 @@
+\begin{vdmpp}[breaklines=true]
+class Team
+types
+  public String = Utilities`String;
+instance variables
+   private name: String;   
+   private p1: Player;
+   private p2: Player;
+operations
+(*@
+\label{Team:9}
+@*)
+   public Team: String * Player * Player ==> Team
+   Team (n,p_1,p_2) == (
+   p1 := p_1;
+   p2 := p_2;
+   name := n;
+   );
+ 
+(*@
+\label{getPontuacao:16}
+@*)
+  public getPontuacao: () ==> nat
+    getPontuacao() == (
+    return p1.getPoints() + p2.getPoints()
+     );
+   
+(*@
+\label{getPlayer1:21}
+@*)
+   pure public getPlayer1: () ==> Player
+   getPlayer1() ==(
+   return p1 )
+   post RESULT = p1;
+   
+(*@
+\label{getPlayer2:26}
+@*)
+   pure public getPlayer2: () ==> Player
+   getPlayer2() ==(
+   return p2 )
+   post RESULT = p2;
+   
+(*@
+\label{getName:31}
+@*)
+   pure public getName: () ==> Utilities`String
+   getName() ==(
+   return name )
+   post RESULT = name;
+ functions
+
+end Team
+\end{vdmpp}

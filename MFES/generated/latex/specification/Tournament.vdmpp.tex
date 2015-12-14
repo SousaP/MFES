@@ -1,0 +1,85 @@
+\begin{vdmpp}[breaklines=true]
+class Tournament
+types
+public String = Utilities`String;
+instance variables
+   public teams : map String to Team;   
+   public game: Game;
+   public trys: nat1;
+   public size: nat1;
+operations
+(*@
+\label{Tournament:10}
+@*)
+  public Tournament: map String to Team * nat1 * nat1 ==> Tournament
+   Tournament (t,ts,s) == (
+   teams :=t;
+   trys:=ts;
+   size:=s;
+   );
+   
+(*@
+\label{startGame:17}
+@*)
+   public startGame: String * Player * Player ==> ()
+   startGame (code,p1,p2) == (
+   game := new Game(code,p1.getName(),p2.getName(),trys,size,3);
+   );
+      
+(*@
+\label{getTeamNames:22}
+@*)
+   pure public getTeamNames: () ==> set of  String
+   getTeamNames() == (
+   return dom teams;
+   );   
+
+(*@
+\label{getTeamPoints:27}
+@*)
+   public getTeamPoints:  String  ==> nat
+   getTeamPoints(n) == ( 
+   return teams(n).getPontuacao();   
+   )
+   pre n in set getTeamNames();
+   
+(*@
+\label{dumpTournamentshipToString:33}
+@*)
+(*@
+\label{dumpTournamentToString:33}
+@*)
+    public dumpTournamentToString : () ==> String
+  dumpTournamentToString() ==
+   return  teamsToString()  ^ gamesToString() ;
+   
+(*@
+\label{teamsToString:37}
+@*)
+   private teamsToString:() ==> String
+   teamsToString () == (
+   dcl string :String:= "TeamName";
+   for all n in set getTeamNames() do
+   string :=  string ^";" ^ n;
+   return string;
+   );
+   
+(*@
+\label{gamesToString:45}
+@*)
+   private gamesToString:() ==> String
+   gamesToString () == (
+   dcl string :String:= "\nPlayers;";
+   string :=  string ^  game.getCodeMaker().getName() ^";";
+   string := string ^ game.getCodeBreaker().getName() ^"\n";
+   string := string ^ "Solution;" ^ game.getSolution() ^"\nAttempts:\n";
+   for all attempt in set elems game.getAttempts() do
+   string := string ^ attempt ^"\n";
+   return string;
+   );
+functions
+    
+traces
+-- TODO Define Combinatorial Test Traces here
+end Tournament
+\end{vdmpp}

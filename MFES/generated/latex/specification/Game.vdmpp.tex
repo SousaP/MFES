@@ -1,0 +1,209 @@
+\begin{vdmpp}[breaklines=true]
+class Game
+types
+  public String = Utilities`String;
+instance variables
+   private solution : seq1 of Piece`Color;
+   inv len solution = boardLenght;
+   private attempts : seq of (seq1 of Piece`Color) := [];
+   private maxAttempts: nat1;   
+   private codeMaker:  Player ;
+   private codeBreaker:  Player ;    
+   private boardLenght: nat1;
+   private matches: nat1;   
+   
+operations
+--Construtores
+  public Game : seq1 of Piece`Color * String * String * nat1 * nat1 *nat1 ==> Game
+(*@
+\label{Game:17}
+@*)
+  Game (correctPlay,m,b,trys,size,partidas) == (
+   solution := correctPlay;
+   attempts := [];
+   codeMaker := new Player(m);
+   codeBreaker := new Player(b);
+   maxAttempts := trys;
+   boardLenght := size;
+   matches := partidas;
+  )
+  post solution = correctPlay and
+   attempts = [] and len correctPlay = boardLenght; 
+  
+  public Game : nat1 * nat1 * nat1 ==> Game
+  Game(trys,size,partidas) == (
+  boardLenght := size;
+  matches := partidas;
+   solution := Piece`getRandomSequence(boardLenght);
+   attempts := [];
+   codeMaker := new Player();
+   codeBreaker := new Player();
+   maxAttempts := trys;   
+  )
+  post len solution = boardLenght and attempts = []; 
+
+(*@
+\label{getSolution:41}
+@*)
+  pure public getSolution: () ==> seq1 of Piece`Color
+(*@
+\label{setMaxAttempts:42}
+@*)
+  getSolution() == return solution
+  post RESULT = solution;
+  
+(*@
+\label{isGameOver:45}
+@*)
+(*@
+\label{getCodeBreaker:45}
+@*)
+  pure public getCodeBreaker: () ==> Player
+  getCodeBreaker() == return codeBreaker
+  post RESULT = codeBreaker;
+  
+(*@
+\label{winGame:49}
+@*)
+(*@
+\label{getCodeMaker:49}
+@*)
+  pure public getCodeMaker: () ==> Player
+  getCodeMaker() == return codeMaker
+  post RESULT = codeMaker;
+  
+(*@
+\label{getMatches:53}
+@*)
+  pure public getMatches: () ==> nat1
+(*@
+\label{changePlayer:54}
+@*)
+  getMatches() == return matches
+  post RESULT = matches;
+  
+(*@
+\label{getAttempts:57}
+@*)
+  pure public getAttempts: () ==> seq of (seq1 of Piece`Color)
+  getAttempts() == return attempts
+  post RESULT = attempts;
+
+(*@
+\label{isSolutionCracked:61}
+@*)
+  public setMaxAttempts:(nat1)==> () 
+  setMaxAttempts(n) == maxAttempts := n;
+  
+  pure public isGameOver : () ==> bool
+(*@
+\label{makeAPlay:65}
+@*)
+   isGameOver () == (return isSolutionCracked() or len attempts = maxAttempts)  
+  post RESULT = ( isSolutionCracked() or len attempts = maxAttempts);
+  
+  public winGame : () ==> ()
+   winGame() == (
+(*@
+\label{numberOfTriesRemaining:70}
+@*)
+   if(isSolutionCracked()) then
+   (codeMaker.addPoints(len attempts);)
+   else
+   codeMaker.addPoints(len attempts+1);
+  )
+(*@
+\label{calculateRightColorsInRightPlaces:75}
+@*)
+  pre  isGameOver() = true;
+  
+  public changePlayer: () ==> ()
+  changePlayer () == (
+  dcl tmp:  Player := codeMaker;  
+  codeMaker:=codeBreaker;
+  codeBreaker := tmp;
+(*@
+\label{calculateRightColorsInWrongPlaces:82}
+@*)
+  matches := matches -1;
+  )
+  pre matches > 0
+  post matches >= 0;
+  
+  
+  pure public isSolutionCracked : () ==> bool
+   isSolutionCracked () == return solution in set elems attempts
+  post solution in set elems attempts => RESULT = true;  
+    
+  public makeAPlay : seq1 of Piece`Color ==> ()
+   makeAPlay (attempt) == attempts := attempts ^ [attempt]
+  pre len attempt = boardLenght and not isGameOver()
+  post attempts = attempts~ ^ [attempt];    
+  
+  public numberOfTriesRemaining : () ==> nat
+   numberOfTriesRemaining () == return maxAttempts - len attempts
+  pre (len attempts) <= maxAttempts
+(*@
+\label{numberOfMatchingElems:100}
+@*)
+  post RESULT = maxAttempts - len attempts;
+  
+  public calculateRightColorsInRightPlaces : seq of Piece`Color ==> nat
+   calculateRightColorsInRightPlaces (attempt) ==
+    return numberOfMatchingElems(attempt, solution)
+  pre len attempt = len solution
+  post RESULT <= len solution;
+   
+   
+  public calculateRightColorsInWrongPlaces : seq of Piece`Color ==> nat
+   calculateRightColorsInWrongPlaces (attempt) ==
+   -- Just a temporary variable to hold the value of the sum expression
+(*@
+\label{countOccurences:112}
+@*)
+   -- (see previous URL)
+    (dcl temp : nat := 0;
+     for all color in set Piece`ColorsSet do
+      temp := temp +
+       min(
+        countOccurences(solution, color),
+        countOccurences(attempt, color));
+     return temp - calculateRightColorsInRightPlaces(attempt);
+    )
+  pre len attempt = len solution
+(*@
+\label{min:122}
+@*)
+  post RESULT <= len solution;
+
+functions
+
+  -- Return the number of elements in the sequence that are a match both
+private numberOfMatchingElems : seq of Piece`Color * seq of Piece`Color -> nat
+   numberOfMatchingElems (firstSeq, secondSeq) ==
+    if firstSeq = [] then
+     0
+    elseif hd firstSeq = hd secondSeq then
+     1 + numberOfMatchingElems(tl firstSeq, tl secondSeq)
+    else
+     numberOfMatchingElems(tl firstSeq, tl secondSeq)
+   pre (len firstSeq) = (len secondSeq)
+   post firstSeq = [] => RESULT = 0;
+
+-- Return the number of times the element appears in the sequence
+  private countOccurences : seq of Piece`Color * Piece`Color -> nat
+   countOccurences (sequence, element) ==
+    if sequence = [] then
+     0
+    elseif hd sequence = element then
+     1 + countOccurences(tl sequence, element)
+    else
+     countOccurences(tl sequence, element)
+   post sequence = [] => RESULT = 0;
+   
+   static public min : nat * nat -> nat
+   min(a, b) ==
+    if a <= b then a
+    else b;
+end Game
+\end{vdmpp}
