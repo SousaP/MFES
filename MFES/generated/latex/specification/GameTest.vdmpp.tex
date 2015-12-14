@@ -1,0 +1,198 @@
+\begin{vdmpp}[breaklines=true]
+class GameTest
+operations    
+    public static main: () ==> ()
+              main() ==
+               (
+                      new GameTest().runAllTests();
+    );
+(*@
+\label{main:8}
+@*)
+  
+ private runAllTests : () ==> ()
+  runAllTests () == (
+   test1();
+   test2();
+   test3();
+(*@
+\label{runAllTests:14}
+@*)
+   test4();
+   test5();
+   test6();
+   test7();
+   test8();
+   test9();
+   test10();
+  );
+ 
+ static public AssertTrue : bool ==> ()
+(*@
+\label{AssertTrue:24}
+@*)
+  AssertTrue(cond) == return
+    pre cond;
+    
+  --R1 -> O sistema deve fornecer a capacidade de iniciar um jogo contra um bot
+  private test1: () ==> ()
+(*@
+\label{test1:29}
+@*)
+  test1() ==
+  (  
+  dcl gameBot: Game := new Game(5,4,1);
+  gameBot.makeAPlay(gameBot.getSolution());   
+  AssertTrue(gameBot.isSolutionCracked() and gameBot.isGameOver());
+  );
+  
+  --R2 -> O sistema deve fornecer a capacidade de iniciar um jogo de dois jogadores
+(*@
+\label{test2:37}
+@*)
+  private test2: () ==> ()
+  test2() ==
+  (  
+   dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,1);
+  gamePlayers.makeAPlay("bbbb");   
+  AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
+  );
+  
+(*@
+\label{test3:45}
+@*)
+  --R -> O sistema deve guardar registos de melhores pontuações
+  private test3: () ==> ()
+  test3() ==
+  (  
+  dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,1);
+  gamePlayers.makeAPlay("bgbb"); 
+  gamePlayers.makeAPlay("bbbb"); 
+  gamePlayers.winGame();
+  AssertTrue(gamePlayers.getCodeMaker().getPoints() = 2  and gamePlayers.isGameOver());
+(*@
+\label{test4:54}
+@*)
+  );
+  --R1 -> O sistema deve fornecer a possibilidade de escolher o número de partidas
+  private test4: () ==> ()
+  test4() ==
+  ( 
+  -- 5 attempts default
+  dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,1);
+  gamePlayers.setMaxAttempts(2); 
+  gamePlayers.makeAPlay("bgbb");
+  AssertTrue(gamePlayers.numberOfTriesRemaining() = 1);
+
+(*@
+\label{test5:65}
+@*)
+  gamePlayers.makeAPlay("bbbb"); --Solution
+  gamePlayers.winGame();
+  AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
+  );
+  --R3 -> O sistema deve fornecer a capacidade de criar tentativas para o codebreaker decifrar o código (cada tentativa corresponde a colocar 4 peças no tabuleiro)
+  private test5: () ==> ()
+  test5() ==
+  ( 
+  dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,1);
+  gamePlayers.setMaxAttempts(10); 
+  gamePlayers.makeAPlay("bgbb");
+  gamePlayers.makeAPlay("bgbo");
+  gamePlayers.makeAPlay("bgyb");
+  gamePlayers.makeAPlay("rgbb");
+(*@
+\label{test6:79}
+@*)
+  gamePlayers.makeAPlay("bgbo");
+  gamePlayers.makeAPlay("bgbm");
+  gamePlayers.makeAPlay("bbbb"); --Solution
+  AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
+  );
+  -- Testar se ao fim de um jogo a função de cada jogador é trocada.
+  private test6: () ==> ()
+  test6() ==
+  ( 
+  dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,2); 
+  --codeMaker => Ze \-||-/ codeBreaker => tony
+  gamePlayers.changePlayer();
+  AssertTrue(gamePlayers.getCodeBreaker().getName() = "ze" and gamePlayers.getCodeMaker().getName() = "tony" and gamePlayers.getMatches()=1);
+  );
+(*@
+\label{test7:93}
+@*)
+  -- Teste relacionados com equipa
+  private test7: () ==> ()
+  test7() ==
+  ( 
+    dcl p1:Player:= new Player("ze");
+   dcl p2:Player:= new Player("tony");
+   dcl t:Team:= new Team("FEUPinhos",p1,p2);  
+  AssertTrue(t.getPlayer1().getName()="ze" and t.getPlayer2().getName()="tony" and t.getName() = "FEUPinhos");
+  );
+(*@
+\label{test8:102}
+@*)
+  -- Teste para calcular cores em sitio correcto e sitio 
+  private test8: () ==> ()
+  test8() ==
+  ( 
+  dcl tempGame :Game := new Game("baaa","ze","tony",5,4,1);
+  AssertTrue(tempGame.calculateRightColorsInRightPlaces("baac")=3 and tempGame.calculateRightColorsInWrongPlaces("cccb")= 1);
+  );
+(*@
+\label{test9:109}
+@*)
+  -- Teste para torneio
+  private test9: () ==> ()
+  test9() ==
+  ( 
+   dcl p1:Player:= new Player("ze");
+   dcl p2:Player:= new Player("tony");
+   dcl t1:Team:= new Team("FEUPinhos",p1,p2);
+   dcl p3:Player:= new Player("to");
+   dcl p4:Player:= new Player("rui");
+   dcl t2:Team:= new Team("FEPinhos",p1,p2);
+   dcl tor: Tournament := new Tournament({t1.getName() |-> t1, t2.getName() |-> t2},5,4);
+   
+   AssertTrue(tor.getTeamNames() = {"FEUPinhos", "FEPinhos"});
+   AssertTrue(tor.getTeamPoints("FEUPinhos") = 0);
+   
+   tor.startGame ("bbbb",p1,p3);
+   AssertTrue(tor.game.isSolutionCracked() = false);
+  );
+  
+(*@
+\label{test10:128}
+@*)
+  private test10: () ==> ()
+  test10() ==
+  ( 
+   dcl p1:Player:= new Player("ze");
+   dcl p2:Player:= new Player("tony");
+   dcl t1:Team:= new Team("FEUPinhos",p1,p2);
+   dcl p3:Player:= new Player("to");
+   dcl p4:Player:= new Player("rui");
+   dcl t2:Team:= new Team("FEPinhos",p1,p2);
+   dcl tor: Tournament := new Tournament({t1.getName() |-> t1, t2.getName() |-> t2},5,4);
+   dcl io : IO := new IO();
+   tor.startGame("bbbb",p1,p3);
+   tor.game.makeAPlay("bcbc");
+   tor.game.makeAPlay("cbcb");
+   AssertTrue(io.fecho("torn.txt", tor.dumpTournamentToString(), <start>) = true);
+  );
+  
+ traces 
+  t1:test1();  
+   t2:test2();
+   t3:test3(); 
+    t4:test4();          
+   t5:test5();
+   t6:test6();
+   t7:test7();
+  t8:test8();
+  t9:test9();
+  t10:test10();
+            
+end GameTest
+\end{vdmpp}

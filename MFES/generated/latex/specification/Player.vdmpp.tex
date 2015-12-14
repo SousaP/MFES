@@ -1,0 +1,43 @@
+\begin{vdmpp}[breaklines=true]
+class Player
+types
+public String = Utilities`String;
+instance variables
+   private name: String;
+   private points: nat := 0;
+
+(*@
+\label{Player:8}
+@*)
+operations
+   public Player: String ==> Player
+   Player(n) == (name := n; return self); 
+(*@
+\label{addAttempts:11}
+@*)
+   
+   public addPoints: nat ==> ()
+   addPoints(inc) == points := points +inc;   
+(*@
+\label{addPoints:14}
+@*)
+   
+   public getPoints: () ==> nat
+    getPoints() == return points
+(*@
+\label{getPoints:17}
+@*)
+   post RESULT = points;
+
+(*@
+\label{getName:19}
+@*)
+   public getName: () ==> String
+(*@
+\label{getAttempts:20}
+@*)
+    getName() == return name
+   post RESULT = name; 
+   
+end Player
+\end{vdmpp}

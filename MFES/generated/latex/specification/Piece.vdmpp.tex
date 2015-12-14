@@ -1,0 +1,33 @@
+\begin{vdmpp}[breaklines=true]
+class Piece
+types
+   public Color = char  
+
+instance variables
+   static public ColorsSet: set of Color := {'b', 'g', 'r', 'o', 'y', 'm'};
+   static public Colors: seq of Color := ['b', 'g', 'r', 'o', 'y', 'm'];
+   
+operations
+   
+(*@
+\label{getRandomSequence:11}
+@*)
+  static public getRandomSequence: nat1 ==> seq1 of char
+    getRandomSequence(length) == (
+    return [randomPiece() | i in set {1,...,length}]
+
+  )
+  post len RESULT = length and
+    forall color in set elems RESULT & color in set ColorsSet;
+
+
+(*@
+\label{randomPiece:20}
+@*)
+  static private randomPiece: () ==> Color
+  randomPiece() == (
+  return Colors(MATH`rand(5)+1);
+  )
+
+end Piece
+\end{vdmpp}
