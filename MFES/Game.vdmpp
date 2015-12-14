@@ -1,18 +1,18 @@
 class Game
-
+types
+		public String = Utilities`String;
 instance variables
-			public solution : seq1 of Piece`Color;
+			private solution : seq1 of Piece`Color;
 			inv len solution = boardLenght;
 			private attempts : seq of (seq1 of Piece`Color) := [];
-			private gameOver: bool := false;		
 			private maxAttempts: nat1;			
-			public codeMaker:  Player ;
-			public codeBreaker:  Player ;				
-			public boardLenght: nat1 :=4;
+			private codeMaker:  Player ;
+			private codeBreaker:  Player ;				
+			private boardLenght: nat1 :=4;
 			
 operations
 --Construtores
-		public Game : seq1 of Piece`Color * seq1 of char * seq1 of char * nat1 * nat1 ==> Game
+		public Game : seq1 of Piece`Color * String * String * nat1 * nat1 ==> Game
 		Game (correctPlay,m,b,trys,size) == (
 			solution := correctPlay;
 			attempts := [];
@@ -24,7 +24,6 @@ operations
 		pre len correctPlay = boardLenght
 		post solution = correctPlay and
 			attempts = [];	
-			
 		
 		public Game : nat1 * nat1 ==> Game
 		Game(trys,size) == (
@@ -37,6 +36,18 @@ operations
 		)
 		post len solution = boardLenght and attempts = [];	
 
+		pure public getSolution: () ==> seq1 of Piece`Color
+		getSolution() == return solution
+		post RESULT = solution;
+		
+			pure public getCodeBreaker: () ==> Player
+		getCodeBreaker() == return codeBreaker
+		post RESULT = codeBreaker;
+		
+		pure public getCodeMaker: () ==> Player
+		getCodeMaker() == return codeMaker
+		post RESULT = codeMaker;
+
 		public setMaxAttempts:(nat1)==> ()
 		setMaxAttempts(n) == maxAttempts := n;
 		
@@ -45,8 +56,12 @@ operations
 		post RESULT = ( isSolutionCracked() or len attempts = maxAttempts);
 		
 		public winGame : () ==> ()
-			winGame() == (codeBreaker.addPoints(3);
-			gameOver := true)
+			winGame() == (
+			if(isSolutionCracked()) then
+			(codeMaker.addPoints(len attempts);)
+			else
+			codeMaker.addPoints(len attempts+1);
+		)
 		pre  isGameOver() = true;
 		
 		public changePlayer: () ==> ()

@@ -1,25 +1,23 @@
 class Player
+types
+public String = Utilities`String;
 instance variables
-			private name: seq1 of char;
-			private myAttempts: nat1 := 1;
+			private name: String;
 			private points: nat := 0;
 
 operations
-			public Player: seq1 of char ==> Player
+			public Player: String ==> Player
 			Player(n) == (name := n; return self); 
-
-			public addAttempts: () ==> ()
-			addAttempts() == myAttempts := myAttempts +1;
 			
 			public addPoints: nat ==> ()
 			addPoints(inc) == points := points +inc;			
 			
 			public getPoints: () ==> nat
-				getPoints() == return points;
+				getPoints() == return points
+			post RESULT = points;
 
-			public getName: () ==> seq1 of char
+			public getName: () ==> String
 				getName() == return name
-			post RESULT = name;
-			public getAttempts: () ==> nat1
-				getAttempts() == return myAttempts;				
+			post RESULT = name;	
+			
 end Player

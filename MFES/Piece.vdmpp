@@ -13,8 +13,8 @@ operations
 				return [randomPiece() | i in set {1,...,length}]
 
 		)
-		post len RESULT = length;-- and
-		--	forall color in set elems RESULT & color in set ColorsSet;
+		post len RESULT = length and
+		 	forall color in set elems RESULT & color in set ColorsSet;
 
 
 		static private randomPiece: () ==> Color
