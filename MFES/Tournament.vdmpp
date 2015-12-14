@@ -12,7 +12,8 @@ operations
 			teams :=t;
 			trys:=ts;
 			size:=s;
-			);
+			)
+			post card getTeamNames() mod 2 = 0;
 			
 			public startGame: String * Player * Player ==> ()
 			startGame (code,p1,p2) == (

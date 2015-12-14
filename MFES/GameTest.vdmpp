@@ -18,6 +18,7 @@ operations
 			test8();
 			test9();
 			test10();
+			test11();
 		);
 	
 	static public AssertTrue : bool ==> ()
@@ -140,7 +141,16 @@ operations
 			tor.game.makeAPlay("cbcb");
 			AssertTrue(io.fecho("torn.txt", tor.dumpTournamentToString(), <start>) = true);
 		);
-		
+		--Teste o numero de tentativas necessarias para decifar o codigo
+		private test11: () ==> ()
+		test11() ==
+		(		
+		dcl gamePlayers: Game := new Game("bbbb","ze","tony",5,4,1); 	-- 5 attempts default	
+		gamePlayers.makeAPlay("bgbb");
+		gamePlayers.makeAPlay("bbbb");	--Solution
+		AssertTrue(gamePlayers.maxAttempts - gamePlayers.numberOfTriesRemaining() = 2);
+		AssertTrue(gamePlayers.isSolutionCracked() and gamePlayers.isGameOver());
+		);
  traces	
 	 t1:test1();  
    t2:test2();
@@ -152,5 +162,6 @@ operations
    t8:test8();
    t9:test9();
    t10:test10();
+   t11:test11();
             
 end GameTest
