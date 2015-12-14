@@ -17,6 +17,7 @@ operations
 			test7();
 			test8();
 			test9();
+			test10();
 		);
 	
 	static public AssertTrue : bool ==> ()
@@ -124,6 +125,21 @@ operations
 			AssertTrue(tor.game.isSolutionCracked() = false);
 		);
 		
+		private test10: () ==> ()
+		test10() ==
+		(	
+			dcl p1:Player:= new Player("ze");
+			dcl p2:Player:= new Player("tony");
+			dcl t1:Team:= new Team("FEUPinhos",p1,p2);
+			dcl p3:Player:= new Player("to");
+			dcl p4:Player:= new Player("rui");
+			dcl t2:Team:= new Team("FEPinhos",p1,p2);
+			dcl tor: Tournament := new Tournament({t1.getName() |-> t1, t2.getName() |-> t2},5,4);
+			dcl io : IO := new IO(),
+			writeSuccess : bool := io.fecho("champ1.txt", tor.dumpTournamentToString(), <start>);
+			AssertTrue(writeSuccess = true);
+		);
+		
  traces	
 	 t1:test1();  
    t2:test2();
@@ -134,5 +150,6 @@ operations
    t7:test7();
   t8:test8();
   t9:test9();
+  t10:test10();
             
 end GameTest

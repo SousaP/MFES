@@ -30,8 +30,8 @@ operations
 			)
 			pre n in set getTeamNames();
 			
-				public dumpTournamentshipToString : () ==> String
-		dumpTournamentshipToString() ==
+				public dumpTournamentToString : () ==> String
+		dumpTournamentToString() ==
 			return "new Tournament(" ^ teamsToString() ^ "\n " ^ gamesToString() ^ ")";
 			
 			private teamsToString:() ==> String
